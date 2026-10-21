@@ -1,0 +1,106 @@
+---
+import { sourceKinds, type Source } from '../data/sources';
+import { stations } from '../data/stations';
+import { stationUrl } from '../lib/paths';
+
+interface Props {
+  source: Source;
+  showStations?: boolean;
+}
+const { source: s, showStations = false } = Astro.props;
+const cited = stations.filter((st) => st.sources.includes(s.id));
+---
+
+<li class="src" id={`src-${s.id}`}>
+  <span class="src-label">{s.label}</span>
+  <div class="src-body">
+    <p class="src-cite" dir="ltr" lang="en">{s.citation}</p>
+    <p class="src-meta">
+      <span class="src-kind">{sourceKinds[s.kind]}</span>
+      <a href={s.url} rel="noopener" target="_blank">{s.linkLabel}<span class="visually-hidden"> (يفتح في نافذة جديدة)</span></a>
+      {
+        s.extra?.map((e) => (
+          <a href={e.url} rel="noopener" target="_blank">
+            <span dir="ltr" lang="en" class="latin">{e.label}</span>
+            <span class="visually-hidden"> (يفتح في نافذة جديدة)</span>
+          </a>
+        ))
+      }
+    </p>
+    <p class="src-line"><strong>ما يدعمه:</strong> {s.supports}</p>
+    <p class="src-line"><strong>ما استُخدم منه:</strong> {s.used}</p>
+    {s.extra?.some((e) => e.note) && <p class="src-line">{s.extra.filter((e) => e.note).map((e) => e.note).join(' ')}</p>}
+    {
+      showStations && cited.length > 0 && (
+        <p class="src-line">
+          <strong>المحطات:</strong>{' '}
+          {cited.map((st, i) => (
+            <>
+              {i > 0 && '، '}
+              <a href={stationUrl(st)}>
+                {st.id} {st.short}
+              </a>
+            </>
+          ))}
+        </p>
+      )
+    }
+  </div>
+</li>
+
+<style>
+  .src {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr;
+    gap: 0.8rem;
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 6rem;
+  }
+  .src:target {
+    background: #f6e7cc;
+  }
+  .src-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--copper);
+    font-size: 1.05rem;
+  }
+  .src-cite {
+    font-family: var(--font-latin);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: left;
+    margin-bottom: 0.4rem;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+  }
+  .src-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+  .src-meta a {
+    overflow-wrap: anywhere;
+  }
+  .src-kind {
+    font-family: var(--font-display);
+    color: var(--prussian);
+    background: var(--prussian-tint);
+    padding: 0 0.5rem;
+    border-radius: 2px;
+  }
+  .src-line {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    margin-bottom: 0.2rem;
+    line-height: 1.8;
+  }
+  .src-line strong {
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--ink);
+  }
+</style>

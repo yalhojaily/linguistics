@@ -1,0 +1,168 @@
+---
+import Base from '../layouts/Base.astro';
+import { glossary } from '../data/glossary';
+import { stationById } from '../data/stations';
+import { stationUrl } from '../lib/paths';
+---
+
+<Base title="معجم المصطلحات" description="معجم تمهيدي قابل للبحث لمصطلحات اللسانيات، مع المقابل الإنجليزي وربط بالمحطات." current="glossary/">
+  <header class="wrap g-intro">
+    <p class="eyebrow">معجم تمهيدي</p>
+    <h1>معجم المصطلحات</h1>
+    <p class="lede measure">
+      التعريفات مبسطة للقارئ غير المتخصص؛ وتقدم المصادر المشار إليها في كل محطة التفاصيل والاختلافات النظرية.
+    </p>
+  </header>
+
+  <div class="wrap g-tools no-print">
+    <label for="g-q">ابحث في المعجم (بالعربية أو الإنجليزية)</label>
+    <div class="g-row">
+      <input id="g-q" type="search" placeholder="مثلاً: الدلالة، phoneme" autocomplete="off" />
+      <button type="button" class="btn btn-ghost btn-small" id="g-reset">مسح</button>
+    </div>
+    <p class="g-count" id="g-count" aria-live="polite">{glossary.length} مصطلحاً.</p>
+  </div>
+
+  <div class="wrap">
+    <p class="g-empty" id="g-empty" hidden>لا يوجد مصطلح يطابق هذا البحث. جرّب صيغة أخرى أو امسح البحث.</p>
+    <dl class="terms">
+      {
+        glossary.map((t) => (
+          <div class="term" id={`term-${t.id}`} data-text={`${t.ar} ${t.en} ${t.def}`}>
+            <dt>
+              <span class="t-ar">{t.ar}</span>
+              <span class="t-en" dir="ltr" lang="en">{t.en}</span>
+            </dt>
+            <dd>
+              <p>{t.def}</p>
+              <p class="t-st">
+                <span>في المحطات:</span>
+                {t.stations.map((id) => {
+                  const s = stationById.get(id)!;
+                  return <a class="tag" href={stationUrl(s)}>{s.id} {s.short}</a>;
+                })}
+              </p>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</Base>
+
+<script>
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه');
+  const input = document.getElementById('g-q') as HTMLInputElement;
+  const terms = [...document.querySelectorAll<HTMLElement>('.term')];
+  const count = document.getElementById('g-count')!;
+  const empty = document.getElementById('g-empty')!;
+  const run = () => {
+    const parts = norm(input.value.trim()).split(/\s+/).filter(Boolean);
+    let n = 0;
+    terms.forEach((t) => {
+      const ok = parts.every((p) => norm(t.dataset.text ?? '').includes(p));
+      t.hidden = !ok;
+      if (ok) n++;
+    });
+    count.textContent = parts.length ? `${n} من ${terms.length} مصطلحاً.` : `${terms.length} مصطلحاً.`;
+    empty.hidden = n !== 0;
+  };
+  input.addEventListener('input', run);
+  document.getElementById('g-reset')?.addEventListener('click', () => {
+    input.value = '';
+    run();
+    input.focus();
+  });
+  const q = new URLSearchParams(location.search).get('q');
+  if (q) {
+    input.value = q;
+    run();
+  }
+</script>
+
+<style>
+  .g-intro {
+    padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+  }
+  .g-tools {
+    max-width: 36rem;
+    margin-inline-start: max(var(--gutter), calc((100vw - var(--wide)) / 2));
+    margin-inline-end: auto;
+  }
+  .g-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
+  }
+  .g-count {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 0.5rem;
+  }
+  .g-empty {
+    padding: 2rem;
+    text-align: center;
+    border: 1px dashed var(--rule-strong);
+    background: var(--paper);
+  }
+  .terms {
+    margin: 1rem 0 4rem;
+    columns: 1;
+    column-gap: 3rem;
+    border-top: 3px double var(--rule-strong);
+  }
+  @media (min-width: 60rem) {
+    .terms {
+      columns: 2;
+    }
+  }
+  .term {
+    break-inside: avoid;
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 5rem;
+  }
+  .term:target {
+    background: #f6e7cc;
+  }
+  .term dt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.8rem;
+  }
+  .t-ar {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--prussian-deep);
+  }
+  .t-en {
+    font-family: var(--font-latin);
+    font-style: italic;
+    color: var(--copper);
+  }
+  .term dd {
+    margin: 0.2rem 0 0;
+  }
+  .term dd p {
+    margin-bottom: 0.4rem;
+  }
+  .t-st {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    font-size: var(--step--1);
+  }
+  .t-st > span {
+    color: var(--ink-soft);
+    font-family: var(--font-display);
+  }
+</style>

@@ -1,0 +1,169 @@
+---
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+}
+const { headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+---
+
+<section class="lab" data-lab="irab" aria-labelledby="lab-irab-title">
+  <div class="lab-head">
+    <p class="lab-kicker">نشاط تعليمي · مثال مؤلف</p>
+    <H id="lab-irab-title" class="lab-title">تبديل الإعراب</H>
+    <p class="lab-goal">
+      <strong>الهدف:</strong> ملاحظة أن علامات الإعراب في العربية تحدد مَن فعل ومَن وقع عليه الفعل، حتى حين يبقى ترتيب الاسمين كما هو.
+    </p>
+  </div>
+
+  <p class="irab-sentence" lang="ar" aria-live="polite">
+    <span class="w verb">شاهدَ</span>
+    <span class="w noun" data-noun="a"><span class="w-text">خالدٌ</span><span class="w-role"></span></span>
+    <span class="w noun" data-noun="b"><span class="w-text">سعيداً</span><span class="w-role"></span></span>
+  </p>
+
+  <fieldset class="lab-controls">
+    <legend>اجعل علامة الرفع (الفاعل) على:</legend>
+    <label class="pill"><input type="radio" name="irab-subject" value="a" checked /> خالد</label>
+    <label class="pill"><input type="radio" name="irab-subject" value="b" /> سعيد</label>
+    <button type="button" class="btn btn-ghost btn-small irab-swap">بدّل الحركات</button>
+  </fieldset>
+
+  <dl class="irab-out">
+    <div>
+      <dt>مَن شاهد؟ <span class="hint">الفاعل · مرفوع بالضمة</span></dt>
+      <dd class="irab-subj">خالد</dd>
+    </div>
+    <div>
+      <dt>مَن وقعت عليه المشاهدة؟ <span class="hint">المفعول به · منصوب بالفتحة</span></dt>
+      <dd class="irab-obj">سعيد</dd>
+    </div>
+  </dl>
+
+  <p class="lab-note">
+    لاحظ أن الاسم الذي يلي الفعل مباشرة هو «خالد» في الحالتين؛ الذي تغيّر هو العلامة في آخر الاسمين، ومعها الأدوار. الجملتان مؤلفتان للتعليم، وليستا شاهداً من «الكتاب» لسيبويه.
+  </p>
+</section>
+
+<script>
+  const forms = {
+    a: { nom: 'خالدٌ', acc: 'خالداً', name: 'خالد' },
+    b: { nom: 'سعيدٌ', acc: 'سعيداً', name: 'سعيد' },
+  } as const;
+  type Key = keyof typeof forms;
+
+  document.querySelectorAll<HTMLElement>('[data-lab="irab"]').forEach((lab) => {
+    const radios = lab.querySelectorAll<HTMLInputElement>('input[name="irab-subject"]');
+    const swap = lab.querySelector<HTMLButtonElement>('.irab-swap');
+    const subjOut = lab.querySelector('.irab-subj');
+    const objOut = lab.querySelector('.irab-obj');
+
+    const render = (subject: Key) => {
+      (['a', 'b'] as Key[]).forEach((k) => {
+        const el = lab.querySelector<HTMLElement>(`[data-noun="${k}"]`);
+        if (!el) return;
+        const isSubj = k === subject;
+        el.querySelector('.w-text')!.textContent = isSubj ? forms[k].nom : forms[k].acc;
+        el.querySelector('.w-role')!.textContent = isSubj ? 'فاعل' : 'مفعول به';
+        el.classList.toggle('is-subj', isSubj);
+        el.classList.toggle('is-obj', !isSubj);
+      });
+      const object: Key = subject === 'a' ? 'b' : 'a';
+      if (subjOut) subjOut.textContent = forms[subject].name;
+      if (objOut) objOut.textContent = forms[object].name;
+    };
+
+    radios.forEach((r) => r.addEventListener('change', () => r.checked && render(r.value as Key)));
+    swap?.addEventListener('click', () => {
+      const current = [...radios].find((r) => r.checked)?.value as Key;
+      const next: Key = current === 'a' ? 'b' : 'a';
+      radios.forEach((r) => (r.checked = r.value === next));
+      render(next);
+    });
+    render('a');
+  });
+</script>
+
+<style>
+  .irab-sentence {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1.4rem;
+    font-family: var(--font-body);
+    font-size: clamp(2rem, 1.4rem + 3vw, 3.2rem);
+    line-height: 1.6;
+    margin: 1.5rem 0 1rem;
+    color: var(--prussian-deep);
+  }
+  .w {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .w-text {
+    padding: 0 0.3rem;
+    border-bottom: 3px solid transparent;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+  .w-role {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    min-height: 1.2rem;
+  }
+  .verb .w-text,
+  .verb {
+    color: var(--ink-soft);
+  }
+  .is-subj .w-text {
+    color: var(--prussian);
+    border-color: var(--prussian);
+  }
+  .is-subj .w-role {
+    color: var(--prussian);
+  }
+  .is-obj .w-text {
+    color: var(--copper);
+    border-color: var(--copper);
+    border-bottom-style: dashed;
+  }
+  .is-obj .w-role {
+    color: var(--copper);
+  }
+  .irab-out {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.2rem 0;
+  }
+  @media (min-width: 40rem) {
+    .irab-out {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .irab-out > div {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--rule);
+    background: var(--ivory);
+  }
+  .irab-out > div:first-child {
+    border-inline-start: 4px solid var(--prussian);
+  }
+  .irab-out > div:last-child {
+    border-inline-start: 4px dashed var(--copper);
+  }
+  .irab-out dt {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+  }
+  .irab-out .hint {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .irab-out dd {
+    margin: 0.2rem 0 0;
+    font-size: var(--step-2);
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+</style>

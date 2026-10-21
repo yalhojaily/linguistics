@@ -1,0 +1,805 @@
+---
+import Base from '../../layouts/Base.astro';
+import Pic from '../../components/Pic.astro';
+import DateLine from '../../components/DateLine.astro';
+import SourceItem from '../../components/SourceItem.astro';
+import IrabLab from '../../components/labs/IrabLab.astro';
+import DeixisLab from '../../components/labs/DeixisLab.astro';
+import CorpusLab from '../../components/labs/CorpusLab.astro';
+import ScopeFigure from '../../components/figures/ScopeFigure.astro';
+import LevelsFigure from '../../components/figures/LevelsFigure.astro';
+import { stations, stationById, journeyStations } from '../../data/stations';
+import { eras, tracks, shifts, relations } from '../../data/taxonomy';
+import { sourceById } from '../../data/sources';
+import { images } from '../../data/images';
+import type { Station } from '../../data/types';
+import { stationUrl, url } from '../../lib/paths';
+
+export function getStaticPaths() {
+  return stations.map((s) => ({ params: { slug: s.slug }, props: { s } }));
+}
+
+interface Props {
+  s: Station;
+}
+const { s } = Astro.props;
+const era = eras.find((e) => e.id === s.era)!;
+const idx = stations.indexOf(s);
+const prev = stations[idx - 1];
+const next = stations[idx + 1];
+const jIdx = journeyStations.indexOf(s);
+const jNext = jIdx >= 0 ? journeyStations[jIdx + 1] : undefined;
+const stTracks = s.tracks.map((t) => tracks.find((x) => x.id === t)!);
+const srcs = s.sources.map((id) => sourceById.get(id)!);
+const related = s.related.map((r) => ({ ...r, st: stationById.get(r.id)! }));
+const portrait = s.portrait ? images[s.portrait] : undefined;
+const hero = s.image ? images[s.image] : undefined;
+const shared = s.sharedImage ? { img: images[s.sharedImage.image], with: stationById.get(s.sharedImage.with)! } : undefined;
+const hasExample = Boolean(s.example || s.lab || s.figure || s.reflect);
+const hasPeople = Boolean(s.people?.length || s.works?.length);
+
+const toc = [
+  { id: 'question', label: 'السؤال المركزي' },
+  { id: 'idea', label: 'الفكرة' },
+  { id: 'changed', label: 'ما الذي تغيّر؟' },
+  ...(hasPeople ? [{ id: 'people', label: 'الأعلام والأعمال' }] : []),
+  ...(hasExample ? [{ id: 'example', label: s.lab ? 'مثال وتجربة' : s.example ? 'مثال تعليمي' : 'للتأمل' }] : []),
+  { id: 'limits', label: 'حدود الفكرة' },
+  { id: 'sources', label: 'المصادر' },
+  { id: 'related', label: 'محطات ذات صلة' },
+];
+const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال تعليمي' : s.figure ? 'رسم توضيحي' : 'سؤال للتأمل';
+---
+
+<Base title={`${s.id} — ${s.short}`} description={`${s.question} ${s.summary}`} current="timeline/">
+  <article class="station" data-station={s.id}>
+    <header class="st-head">
+      <div class="wrap">
+        <nav class="crumbs" aria-label="مسار التصفح">
+          <ol>
+            <li><a href={url('timeline/')}>الخط الزمني</a></li>
+            <li><a href={url(`timeline/#era-${era.id}`)}>{era.name}</a></li>
+            <li aria-current="page">المحطة {s.id}</li>
+          </ol>
+        </nav>
+        <div class="st-head-grid">
+          <p class="st-num" aria-hidden="true">{s.id}</p>
+          <div class="st-head-text">
+            <p class="eyebrow">{s.typeLabel} · {shifts[s.shift].name}</p>
+            <h1>{s.title}</h1>
+            <DateLine dates={s.dates} />
+            <ul class="tags st-tracks" aria-label="المسارات">
+              {stTracks.map((t) => <li><a class="tag" href={url(`timeline/?track=${t.id}`)}>مسار: {t.name}</a></li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {
+      hero && (
+        <figure class="st-hero wrap">
+          <div class="frame">
+            <Pic id={hero.id} sizes="(min-width: 76rem) 74rem, 100vw" ratio="16 / 7" eager />
+          </div>
+          <figcaption>{hero.caption}</figcaption>
+        </figure>
+      )
+    }
+
+    <div class="st-layout wrap">
+      <aside class="st-rail no-print" aria-label="محتويات المحطة">
+        <p class="rail-pos">
+          المحطة <strong>{s.num}</strong> من {stations.length}
+        </p>
+        <div class="rail-bar" aria-hidden="true">
+          {stations.map((x) => <span class:list={[{ on: x.num <= s.num, here: x.id === s.id }]} />)}
+        </div>
+        <ol class="rail-toc">
+          {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
+        </ol>
+      </aside>
+
+      <div class="st-content">
+        <section id="question" class="st-question" aria-labelledby="q-label">
+          <p id="q-label" class="q-label">السؤال المركزي</p>
+          <p class="q-text">{s.question}</p>
+        </section>
+
+        <section id="idea" class="st-sec">
+          <h2>الفكرة</h2>
+          {s.body.map((p, i) => <p class:list={[{ 'first-para': i === 0 }]}>{p}</p>)}
+        </section>
+
+        <section id="changed" class="st-sec st-changed">
+          <h2>ما الذي تغيّر؟</h2>
+          <p>{s.changed}</p>
+        </section>
+
+        {
+          hasPeople && (
+            <section id="people" class:list={['st-sec', 'st-people', { 'has-portrait': portrait }]}>
+              <h2>الأعلام والأعمال</h2>
+              <div class="people-grid">
+                {portrait && (
+                  <figure class="portrait">
+                    <div class="frame">
+                      <Pic id={portrait.id} sizes="(min-width: 60rem) 24rem, (min-width: 36rem) 60vw, 92vw" />
+                    </div>
+                    <figcaption>{portrait.caption}</figcaption>
+                  </figure>
+                )}
+                <div class="people-lists">
+                  {s.people && s.people.length > 0 && (
+                    <>
+                      <h3>الأعلام</h3>
+                      <ul class="names">
+                        {s.people.map((p) => (
+                          <li>
+                            {p.ar}
+                            {p.latin && <span class="latin" dir="ltr" lang="en">{p.latin}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {s.works && s.works.length > 0 && (
+                    <>
+                      <h3>أعمال مرتبطة</h3>
+                      <ul class="works">
+                        {s.works.map((w) => (
+                          <li>
+                            «{w.title}»
+                            {w.latin && <span class="latin" dir="ltr" lang="en">{w.latin}</span>}
+                            {(w.year || w.by) && (
+                              <span class="w-meta">{[w.by, w.year].filter(Boolean).join('، ')}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {s.id === '02' && <p class="people-note">كاتيايانا وباتنجلي من أبرز أعلام التقليد التفسيري اللاحق.</p>}
+                </div>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          hasExample && (
+            <section id="example" class="st-sec">
+              <h2>{exampleHeading}</h2>
+              {s.example && !s.lab && (
+                <figure class="example">
+                  <p class="ex-label">مثال تعليمي مؤلف</p>
+                  <div class="ex-lines">
+                    {s.example.lines.map((l) => (
+                      <p class="ex-line">{l}</p>
+                    ))}
+                  </div>
+                  <figcaption>{s.example.explain}</figcaption>
+                </figure>
+              )}
+              {s.lab === 'irab' && <IrabLab />}
+              {s.lab === 'deixis' && <DeixisLab />}
+              {s.lab === 'corpus' && <CorpusLab />}
+              {s.figure === 'scope' && <ScopeFigure />}
+              {s.figure === 'levels' && <LevelsFigure />}
+              {s.reflect && (
+                <aside class="reflect">
+                  <p class="reflect-label">للتأمل</p>
+                  <p>{s.reflect}</p>
+                </aside>
+              )}
+            </section>
+          )
+        }
+
+        {
+          shared && (
+            <figure class="shared">
+              <a href={stationUrl(shared.with)} class="shared-link">
+                <Pic id={shared.img.id} sizes="10rem" widths={[320, 480]} ratio="4 / 3" />
+                <span>
+                  <span class="shared-k">صورة مشتركة مع المحطة {shared.with.id}</span>
+                  <span class="shared-t">{shared.with.short}</span>
+                </span>
+              </a>
+              <figcaption>{shared.img.caption}</figcaption>
+            </figure>
+          )
+        }
+
+        <section id="limits" class="st-sec st-limits">
+          <h2>حدود الفكرة وموضع الخلاف</h2>
+          <ul>
+            {s.limits.map((l) => <li>{l}</li>)}
+          </ul>
+        </section>
+
+        <section id="sources" class="st-sec">
+          <h2>المصادر</h2>
+          <details class="src-details">
+            <summary>
+              <span class="src-count">{srcs.length === 1 ? 'مصدر واحد' : `${srcs.length} مصادر`}</span>
+              <span class="src-chips">{srcs.map((x) => x.label).join(' · ')}</span>
+              <span class="src-open">اعرض التوثيق</span>
+            </summary>
+            <ol class="src-list">
+              {srcs.map((x) => <SourceItem source={x} />)}
+            </ol>
+          </details>
+          <p class="src-all"><a href={url('sources/')}>كل المصادر ووظيفة كل منها</a></p>
+        </section>
+
+        <section id="related" class="st-sec">
+          <h2>محطات ذات صلة</h2>
+          <ul class="related">
+            {
+              related.map((r) => (
+                <li>
+                  <a href={stationUrl(r.st)}>
+                    <span class="rel-type">{relations[r.rel]}</span>
+                    <span class="rel-num">{r.st.id}</span>
+                    <span class="rel-title">{r.st.short}</span>
+                    <span class="rel-q">{r.st.question}</span>
+                  </a>
+                  {r.note && <p class="rel-note">{r.note}</p>}
+                </li>
+              ))
+            }
+          </ul>
+          <p class="rel-legend">«يعالج سؤالاً قريباً» مقارنة مفهومية، ولا يعني انتقال تأثير بين المحطتين.</p>
+        </section>
+      </div>
+    </div>
+
+    <nav class="pager wrap no-print" aria-label="التنقل بين المحطات">
+      {
+        prev ? (
+          <a class="pg pg-prev" href={stationUrl(prev)} rel="prev">
+            <span class="pg-k">المحطة السابقة</span>
+            <span class="pg-t">{prev.id} · {prev.short}</span>
+          </a>
+        ) : <span />
+      }
+      {
+        jNext && (
+          <a class="pg pg-journey" href={stationUrl(jNext)}>
+            <span class="pg-k">التالية في الرحلة القصيرة ({jIdx + 2} من {journeyStations.length})</span>
+            <span class="pg-t">{jNext.id} · {jNext.short}</span>
+          </a>
+        )
+      }
+      {
+        next ? (
+          <a class="pg pg-next" href={stationUrl(next)} rel="next">
+            <span class="pg-k">المحطة التالية</span>
+            <span class="pg-t">{next.id} · {next.short}</span>
+          </a>
+        ) : (
+          <a class="pg pg-next" href={url('timeline/')}>
+            <span class="pg-k">نهاية الخط الزمني</span>
+            <span class="pg-t">عُد إلى كل المحطات</span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .st-head {
+    padding-block: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .crumbs ol {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0 0 1.5rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .crumbs li + li::before {
+    content: '‹';
+    margin-inline-end: 0.4rem;
+    color: var(--rule-strong);
+  }
+  .st-head-grid {
+    display: grid;
+    gap: 0.5rem 2rem;
+    align-items: start;
+  }
+  @media (min-width: 48rem) {
+    .st-head-grid {
+      grid-template-columns: auto 1fr;
+    }
+  }
+  .st-num {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 2rem + 7vw, 7.5rem);
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--copper);
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .st-head h1 {
+    font-size: var(--step-3);
+    max-width: 22em;
+  }
+  .st-tracks {
+    margin-top: 1rem;
+  }
+  .st-hero {
+    margin-bottom: clamp(1.5rem, 4vw, 3rem);
+  }
+  .st-hero :global(img) {
+    width: 100%;
+  }
+  @media (max-width: 40rem) {
+    .st-hero :global(img) {
+      aspect-ratio: 3 / 2 !important;
+    }
+  }
+
+  .st-layout {
+    display: grid;
+    gap: 2rem;
+    padding-bottom: 3rem;
+  }
+  @media (min-width: 62rem) {
+    .st-layout {
+      grid-template-columns: 14rem minmax(0, 1fr);
+      gap: 4rem;
+    }
+    .st-rail {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+    }
+  }
+  .st-rail {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    border-top: 3px double var(--rule-strong);
+    padding-top: 1rem;
+  }
+  .rail-pos {
+    margin-bottom: 0.5rem;
+    color: var(--ink-soft);
+  }
+  .rail-pos strong {
+    color: var(--copper);
+    font-size: 1.2rem;
+  }
+  .rail-bar {
+    display: grid;
+    grid-template-columns: repeat(26, 1fr);
+    gap: 2px;
+    margin-bottom: 1rem;
+  }
+  .rail-bar span {
+    height: 6px;
+    background: var(--rule);
+  }
+  .rail-bar span.on {
+    background: var(--prussian);
+  }
+  .rail-bar span.here {
+    background: var(--copper);
+    height: 10px;
+    margin-top: -2px;
+  }
+  .rail-toc {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.1rem;
+  }
+  .rail-toc a {
+    display: block;
+    padding: 0.25rem 0.6rem;
+    border-inline-start: 2px solid var(--rule);
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+  .rail-toc a:hover,
+  .rail-toc a.active {
+    border-color: var(--copper);
+    color: var(--prussian-deep);
+  }
+  @media (max-width: 61.99rem) {
+    .rail-toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .rail-toc a {
+      border: 1px solid var(--rule);
+      border-radius: 99px;
+      padding: 0.15rem 0.7rem;
+      font-size: 0.82rem;
+    }
+  }
+
+  .st-content {
+    max-width: 44rem;
+    min-width: 0;
+  }
+  .st-sec {
+    margin-bottom: clamp(2.2rem, 5vw, 3.2rem);
+    scroll-margin-top: 6rem;
+  }
+  .st-sec h2 {
+    font-size: var(--step-2);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .st-sec h2::before {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    background: var(--copper);
+    transform: rotate(45deg);
+    flex: none;
+  }
+  .st-question {
+    margin-bottom: 2.5rem;
+    padding: 1.4rem 1.6rem;
+    background: var(--prussian-deep);
+    color: #f3ecdd;
+    position: relative;
+    scroll-margin-top: 6rem;
+  }
+  .st-question::after {
+    content: '؟';
+    position: absolute;
+    inset-inline-end: 1rem;
+    bottom: -1.2rem;
+    font-family: var(--font-display);
+    font-size: 6rem;
+    line-height: 1;
+    color: color-mix(in srgb, var(--amber) 35%, transparent);
+    pointer-events: none;
+  }
+  .q-label {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: #e2b07a;
+    margin-bottom: 0.3rem;
+  }
+  .q-text {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 26em;
+    position: relative;
+    z-index: 1;
+  }
+  .first-para {
+    font-size: var(--step-1);
+    line-height: 1.85;
+  }
+  .st-changed p {
+    font-size: var(--step-1);
+    line-height: 1.85;
+    border-inline-start: 3px solid var(--copper);
+    padding-inline-start: 1rem;
+  }
+  .people-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (min-width: 40rem) {
+    .has-portrait .people-grid {
+      grid-template-columns: minmax(14rem, 24rem) 1fr;
+      align-items: start;
+    }
+  }
+  .portrait {
+    max-width: 26rem;
+  }
+  .people-lists h3 {
+    font-size: 1.05rem;
+    color: var(--copper);
+    margin-bottom: 0.3rem;
+  }
+  .names,
+  .works {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.2rem;
+  }
+  .names li,
+  .works li {
+    padding-block: 0.35rem;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.7rem;
+    align-items: baseline;
+  }
+  .names li {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--prussian-deep);
+  }
+  .latin {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  .w-meta {
+    font-size: 0.85rem;
+    color: var(--copper);
+    font-family: var(--font-display);
+  }
+  .people-note {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+
+  .example {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+  .ex-label {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    color: var(--copper);
+    margin-bottom: 0.4rem;
+  }
+  .ex-lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2.5rem;
+  }
+  .ex-line {
+    font-size: var(--step-2);
+    color: var(--prussian-deep);
+    margin: 0;
+  }
+  .reflect {
+    margin-top: 1.2rem;
+    padding: 1rem 1.2rem;
+    background: var(--paper-2);
+    border-inline-start: 3px solid var(--amber);
+  }
+  .reflect-label {
+    font-family: var(--font-display);
+    color: var(--copper);
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+  }
+  .reflect p:last-child {
+    margin: 0;
+  }
+
+  .shared {
+    margin: -1rem 0 2.5rem;
+  }
+  .shared-link {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 1rem;
+    align-items: center;
+    text-decoration: none;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 0.5rem;
+  }
+  .shared-k {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--copper);
+    font-family: var(--font-display);
+  }
+  .shared-t {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+
+  .st-limits ul {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+  }
+  .st-limits li {
+    position: relative;
+    padding: 0.6rem 2rem 0.6rem 0;
+    border-bottom: 1px dashed var(--rule-strong);
+  }
+  .st-limits li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.4rem;
+    top: 1.25rem;
+    width: 0.9rem;
+    height: 1.5px;
+    background: var(--copper);
+  }
+
+  .src-details {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .src-details summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 1rem;
+    padding: 0.8rem 1rem;
+    font-family: var(--font-display);
+    list-style: none;
+  }
+  .src-details summary::-webkit-details-marker {
+    display: none;
+  }
+  .src-chips {
+    color: var(--copper);
+  }
+  .src-open {
+    margin-inline-start: auto;
+    color: var(--prussian);
+    font-size: 0.9rem;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+  .src-details[open] .src-open {
+    visibility: hidden;
+  }
+  .src-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 1rem;
+  }
+  .src-all {
+    font-size: var(--step--1);
+    margin-top: 0.6rem;
+  }
+
+  .related {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.8rem;
+  }
+  @media (min-width: 40rem) {
+    .related {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .related a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 0.7rem;
+    height: 100%;
+    padding: 0.8rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--prussian);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .related a:hover {
+    border-top-color: var(--copper);
+  }
+  .rel-type {
+    grid-column: 1 / -1;
+    font-size: 0.78rem;
+    font-family: var(--font-display);
+    color: var(--copper);
+  }
+  .rel-num {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--prussian);
+    line-height: 1.4;
+  }
+  .rel-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--prussian-deep);
+    align-self: center;
+  }
+  .rel-q {
+    grid-column: 1 / -1;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+  .rel-note,
+  .rel-legend {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0.3rem 0 0;
+  }
+  .rel-legend {
+    margin-top: 1rem;
+  }
+
+  .pager {
+    display: grid;
+    gap: 0.8rem;
+    padding-bottom: 4rem;
+  }
+  @media (min-width: 48rem) {
+    .pager {
+      grid-template-columns: 1fr auto 1fr;
+    }
+  }
+  .pg {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--rule-strong);
+    text-decoration: none;
+    background: var(--paper);
+  }
+  .pg:hover {
+    border-color: var(--copper);
+  }
+  .pg-next {
+    text-align: end;
+  }
+  .pg-journey {
+    background: var(--prussian-deep);
+    border-color: var(--prussian-deep);
+    text-align: center;
+  }
+  .pg-journey .pg-k {
+    color: #e2b07a;
+  }
+  .pg-journey .pg-t {
+    color: #f6efe0;
+  }
+  .pg-k {
+    font-size: 0.82rem;
+    font-family: var(--font-display);
+    color: var(--copper);
+  }
+  .pg-t {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--prussian-deep);
+  }
+  .pg-prev .pg-t::before {
+    content: '→ ';
+  }
+  .pg-next .pg-t::after {
+    content: ' ←';
+  }
+</style>
+
+<script>
+  // إبراز القسم الحالي في فهرس المحطة.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('.rail-toc a')];
+  if (links.length && 'IntersectionObserver' in window) {
+    const map = new Map(links.map((a) => [a.hash.slice(1), a]));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            links.forEach((l) => l.classList.remove('active'));
+            map.get(e.target.id)?.classList.add('active');
+          }
+        });
+      },
+      { rootMargin: '-30% 0px -60% 0px' },
+    );
+    map.forEach((_, id) => {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+  }
+</script>

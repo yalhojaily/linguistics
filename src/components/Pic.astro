@@ -1,0 +1,41 @@
+---
+import { Picture } from 'astro:assets';
+import { images } from '../data/images';
+import type { ImageId } from '../data/types';
+
+interface Props {
+  id: ImageId;
+  sizes: string;
+  widths?: number[];
+  class?: string;
+  eager?: boolean;
+  /** نسبة عرض إلى ارتفاع للقص عبر CSS، مثل "3 / 2". تُترك فارغة للحفاظ على النسبة الأصلية. */
+  ratio?: string;
+  focus?: string;
+  alt?: string;
+}
+
+const { id, sizes, widths, class: cls, eager = false, ratio, focus, alt } = Astro.props;
+const img = images[id];
+const w = widths ?? (img.kind === 'portrait' ? [320, 480, 720, 1000] : [480, 800, 1200, 1536]);
+const style = [
+  `object-position:${focus ?? img.focus}`,
+  ratio ? `aspect-ratio:${ratio};object-fit:cover;width:100%;height:auto` : '',
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<Picture
+  src={img.src}
+  alt={alt ?? img.alt}
+  formats={['avif', 'webp']}
+  widths={w.filter((x) => x <= img.src.width)}
+  sizes={sizes}
+  quality={72}
+  loading={eager ? 'eager' : 'lazy'}
+  fetchpriority={eager ? 'high' : undefined}
+  decoding={eager ? 'sync' : 'async'}
+  class={cls}
+  style={style}
+/>

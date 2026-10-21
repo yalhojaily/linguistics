@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/paths';
+---
+
+<Base title="الصفحة غير موجودة">
+  <section class="wrap nf">
+    <p class="nf-num" aria-hidden="true">404</p>
+    <h1>لم نجد هذه الصفحة</h1>
+    <p class="lede">ربما تغيّر الرابط. يمكنك العودة إلى البداية أو تصفح كل المحطات.</p>
+    <div class="nf-actions">
+      <a class="btn" href={url()}>الصفحة الرئيسية</a>
+      <a class="btn btn-ghost" href={url('timeline/')}>الخط الزمني</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    padding-block: 5rem 7rem;
+    text-align: center;
+  }
+  .nf-num {
+    font-family: var(--font-display);
+    font-size: 7rem;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--copper);
+    margin: 0;
+  }
+  .nf-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>

@@ -1,0 +1,27 @@
+---
+// علامة بصرية لنوع التاريخ: فترة (شريط ممتد)، نشر (مستطيل كتاب)، أداة (معين)، واقعة (دائرة).
+import type { DateKind } from '../data/types';
+interface Props {
+  kind: DateKind;
+  size?: number;
+}
+const { kind, size = 14 } = Astro.props;
+---
+
+<svg class={`kind-mark kind-${kind}`} width={size * 1.6} height={size} viewBox="0 0 22 14" aria-hidden="true">
+  {kind === 'period' && <rect x="0.5" y="5.5" width="21" height="3" rx="1.5" fill="currentColor" opacity="0.3" />}
+  {kind === 'period' && <rect x="5" y="5" width="12" height="4" rx="2" fill="currentColor" />}
+  {kind === 'publication' && <rect x="6" y="2" width="10" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.6" />}
+  {kind === 'publication' && <line x1="11" y1="2" x2="11" y2="12" stroke="currentColor" stroke-width="1.2" />}
+  {kind === 'tool' && <rect x="6.5" y="2.5" width="9" height="9" transform="rotate(45 11 7)" fill="currentColor" />}
+  {kind === 'event' && <circle cx="11" cy="7" r="4.5" fill="currentColor" />}
+</svg>
+
+<style>
+  .kind-mark {
+    display: inline-block;
+    flex: none;
+    color: var(--copper);
+    vertical-align: middle;
+  }
+</style>

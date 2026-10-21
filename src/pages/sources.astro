@@ -1,0 +1,104 @@
+---
+import Base from '../layouts/Base.astro';
+import SourceItem from '../components/SourceItem.astro';
+import { sources, sourceGroups, sourceById, type SourceGroup } from '../data/sources';
+import { stations } from '../data/stations';
+import { site } from '../data/editorial';
+import { stationUrl } from '../lib/paths';
+
+const groups = Object.keys(sourceGroups) as SourceGroup[];
+---
+
+<Base title="المصادر" description="المراجع الثمانية والثلاثون للموقع، مع نوع كل مرجع وما يدعمه وما استُخدم منه، وربطها بالمحطات." current="sources/">
+  <header class="wrap s-intro">
+    <p class="eyebrow">المصادر</p>
+    <h1>المراجع المشروحة</h1>
+    <p class="lede measure">
+      لكل مرجع نوعه، وما يدعمه في الموقع، وما استُخدم منه فعلاً. استُخدمت النصوص المفتوحة والمقتطفات والملخصات الأكاديمية المتاحة وصفحات بيانات النشر، ولم تُفترض قراءة الكتب المدفوعة كاملة؛ لذلك لا توجد اقتباسات حرفية طويلة ولا إحالات إلى صفحات داخلية لم تُفحص.
+    </p>
+    <p class="s-date">أُعدّت المادة وتُحقق من روابطها في {site.preparedOn}.</p>
+  </header>
+
+  <section class="wrap s-index" aria-labelledby="idx-title">
+    <h2 id="idx-title">المصادر بحسب المحطة</h2>
+    <div class="idx-scroll">
+      <table>
+        <thead>
+          <tr><th scope="col">المحطة</th><th scope="col">المراجع</th></tr>
+        </thead>
+        <tbody>
+          {
+            stations.map((s) => (
+              <tr>
+                <th scope="row"><a href={stationUrl(s, 'sources')}>{s.id} · {s.short}</a></th>
+                <td>
+                  {s.sources.map((id, i) => (
+                    <>
+                      {i > 0 && ' · '}
+                      <a href={`#src-${id}`}>{sourceById.get(id)!.label}</a>
+                    </>
+                  ))}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="wrap s-list">
+    {
+      groups.map((g) => (
+        <section aria-labelledby={`g-${g}`}>
+          <h2 id={`g-${g}`}>{sourceGroups[g]}</h2>
+          <ol class="src-ol">
+            {sources.filter((s) => s.group === g).map((s) => <SourceItem source={s} showStations />)}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .s-intro {
+    padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+  }
+  .s-date {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--copper);
+  }
+  .s-index {
+    margin-block: 2rem 3rem;
+  }
+  .s-index h2,
+  .s-list h2 {
+    font-size: var(--step-2);
+  }
+  .idx-scroll {
+    max-width: 44rem;
+  }
+  .s-index th[scope='row'] {
+    font-family: var(--font-body);
+    font-weight: 400;
+    border-bottom-width: 1px;
+  }
+  .s-index td a {
+    font-family: var(--font-display);
+  }
+  .s-list {
+    max-width: 52rem;
+    padding-bottom: 4rem;
+  }
+  .s-list section {
+    margin-bottom: 3rem;
+  }
+  .src-ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 3px double var(--rule-strong);
+  }
+</style>

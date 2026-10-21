@@ -1,0 +1,589 @@
+---
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import DateLine from '../components/DateLine.astro';
+import OverviewChart from '../components/OverviewChart.astro';
+import { stations } from '../data/stations';
+import { eras, tracks, shifts, dateKinds } from '../data/taxonomy';
+import KindMark from '../components/KindMark.astro';
+import { stationUrl } from '../lib/paths';
+import type { DateKind } from '../data/types';
+
+const searchText = (s: (typeof stations)[number]) =>
+  [s.title, s.short, s.question, s.summary, s.typeLabel, s.period, ...(s.people ?? []).flatMap((p) => [p.ar, p.latin ?? '']), ...(s.works ?? []).flatMap((w) => [w.title, w.latin ?? ''])].join(' ');
+---
+
+<Base title="الخط الزمني" description="المحطات الست والعشرون في تاريخ دراسة اللغة، مع البحث والتصفية حسب الحقبة والمسار ونوع التحول." current="timeline/">
+  <header class="tl-intro wrap">
+    <p class="eyebrow">الاستكشاف الكامل</p>
+    <h1>الخط الزمني</h1>
+    <p class="lede measure">
+      ست وعشرون محطة مرتبة ترتيب قراءة تقريبياً. كثير منها متزامن أو متداخل، وظهور اتجاه جديد لا يعني انتهاء ما قبله. أرقام المحطات تنظيمية، والحقب تجميع تحريري.
+    </p>
+  </header>
+
+  <section class="wrap tl-overview" aria-label="رسم عام لتزامن المحطات">
+    <OverviewChart id="tl-overview" />
+  </section>
+
+  <div class="tl-tools-wrap no-print">
+    <div class="wrap">
+      <form class="tl-tools" role="search" aria-label="بحث وتصفية المحطات" onsubmit="return false">
+        <div class="f f-q">
+          <label for="f-q">بحث</label>
+          <input id="f-q" name="q" type="search" placeholder="اسم، مفهوم، سؤال…" autocomplete="off" />
+        </div>
+        <div class="f">
+          <label for="f-era">الحقبة</label>
+          <select id="f-era" name="era">
+            <option value="">كل الحقب</option>
+            {eras.map((e) => <option value={e.id}>{e.name}</option>)}
+          </select>
+        </div>
+        <div class="f">
+          <label for="f-track">المسار</label>
+          <select id="f-track" name="track">
+            <option value="">كل المسارات</option>
+            {tracks.map((t) => <option value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+        <div class="f">
+          <label for="f-shift">نوع التحول</label>
+          <select id="f-shift" name="shift">
+            <option value="">كل الأنواع</option>
+            {Object.entries(shifts).map(([k, v]) => <option value={k}>{v.name}</option>)}
+          </select>
+        </div>
+        <div class="f f-actions">
+          <button type="reset" class="btn btn-ghost btn-small" id="f-reset">إعادة الضبط</button>
+        </div>
+      </form>
+      <p class="tl-count" id="tl-count" aria-live="polite">تُعرض {stations.length} من {stations.length} محطة.</p>
+    </div>
+  </div>
+
+  <nav class="era-nav wrap" aria-label="التنقل بين الحقب">
+    <ol>
+      {
+        eras.map((e) => (
+          <li>
+            <a href={`#era-${e.id}`} data-era-link={e.id}>
+              <span class="en-name">{e.name}</span>
+              <span class="en-range">{e.range}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <div class="wrap tl-legend">
+    <p><strong>أنواع التواريخ:</strong></p>
+    <ul>
+      {(Object.keys(dateKinds) as DateKind[]).map((k) => <li><KindMark kind={k} /> {dateKinds[k].name}<span class="lg-hint"> — {dateKinds[k].hint}</span></li>)}
+    </ul>
+  </div>
+
+  <div class="wrap tl-body">
+    <div class="tl-empty" id="tl-empty" hidden>
+      <p class="tl-empty-title">لا توجد محطات تطابق هذا البحث.</p>
+      <p>جرّب كلمة أخرى، أو وسّع المرشحات.</p>
+      <button type="button" class="btn btn-small" id="f-reset-2">أعد ضبط المرشحات</button>
+    </div>
+
+    {
+      eras.map((e) => {
+        const list = stations.filter((s) => s.era === e.id);
+        return (
+          <section class="tl-era" id={`era-${e.id}`} data-era={e.id} aria-labelledby={`era-h-${e.id}`}>
+            <header class="era-head">
+              <p class="era-range">{e.range}</p>
+              <h2 id={`era-h-${e.id}`}>{e.name}</h2>
+              <p class="era-intro">{e.intro}</p>
+            </header>
+            <ol class="tl-list">
+              {list.map((s) => {
+                const visual = s.image ? 'scene' : s.portrait ? 'portrait' : 'plain';
+                return (
+                  <li
+                    class:list={['tl-item', `v-${visual}`]}
+                    id={`t-${s.id}`}
+                    data-id={s.id}
+                    data-era={s.era}
+                    data-tracks={s.tracks.join(' ')}
+                    data-shift={s.shift}
+                    data-text={searchText(s)}
+                  >
+                    <span class="tl-dot" aria-hidden="true" />
+                    <article class="tl-card" aria-labelledby={`h-${s.id}`}>
+                      <div class="tl-text">
+                        <p class="tl-meta">
+                          <span class="tl-num">{s.id}</span>
+                          <span class="tl-shift">{shifts[s.shift].name}</span>
+                          {s.journey && <span class="tl-journey">في الرحلة القصيرة</span>}
+                        </p>
+                        <h3 id={`h-${s.id}`}>{s.title}</h3>
+                        <DateLine dates={s.dates} compact />
+                        <p class="tl-q">{s.question}</p>
+                        <p class="tl-sum">{s.summary}</p>
+                        <ul class="tags tl-tags" aria-label="المسارات">
+                          {s.tracks.map((t) => <li class="tag">{tracks.find((x) => x.id === t)!.name}</li>)}
+                        </ul>
+                        <a class="more" href={stationUrl(s)} aria-label={`اكتشف المحطة ${s.id}: ${s.short}`}>اكتشف المحطة</a>
+                      </div>
+                      {s.image && (
+                        <div class="tl-visual">
+                          <Pic id={s.image} sizes="(min-width: 62rem) 26rem, 90vw" widths={[480, 800]} ratio="4 / 3" />
+                        </div>
+                      )}
+                      {!s.image && s.portrait && (
+                        <div class="tl-visual tl-portrait">
+                          <Pic id={s.portrait} sizes="(min-width: 62rem) 12rem, 40vw" widths={[320, 480]} ratio="4 / 5" />
+                        </div>
+                      )}
+                    </article>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        );
+      })
+    }
+  </div>
+</Base>
+
+<script>
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '');
+
+  const form = document.querySelector<HTMLFormElement>('.tl-tools')!;
+  const q = form.querySelector<HTMLInputElement>('#f-q')!;
+  const era = form.querySelector<HTMLSelectElement>('#f-era')!;
+  const track = form.querySelector<HTMLSelectElement>('#f-track')!;
+  const shift = form.querySelector<HTMLSelectElement>('#f-shift')!;
+  const items = [...document.querySelectorAll<HTMLLIElement>('.tl-item')];
+  const sections = [...document.querySelectorAll<HTMLElement>('.tl-era')];
+  const count = document.getElementById('tl-count')!;
+  const empty = document.getElementById('tl-empty')!;
+  const chartRows = new Map(
+    [...document.querySelectorAll<HTMLElement>('#tl-overview .ov-row')].map((r) => [r.dataset.id!, r]),
+  );
+  const eraLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-era-link]')];
+  const texts = new Map(items.map((i) => [i, norm(i.dataset.text ?? '')]));
+
+  function apply(updateUrl = true) {
+    const terms = norm(q.value.trim()).split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const it of items) {
+      const ok =
+        (!era.value || it.dataset.era === era.value) &&
+        (!track.value || (it.dataset.tracks ?? '').split(' ').includes(track.value)) &&
+        (!shift.value || it.dataset.shift === shift.value) &&
+        terms.every((t) => texts.get(it)!.includes(t));
+      it.hidden = !ok;
+      chartRows.get(it.dataset.id!)?.classList.toggle('is-dim', !ok);
+      if (ok) shown++;
+    }
+    sections.forEach((s) => {
+      s.hidden = !s.querySelector('.tl-item:not([hidden])');
+    });
+    eraLinks.forEach((a) => {
+      const sec = document.getElementById(`era-${a.dataset.eraLink}`);
+      a.classList.toggle('is-empty', !!sec?.hidden);
+    });
+    const filtered = Boolean(terms.length || era.value || track.value || shift.value);
+    count.textContent = filtered
+      ? `تُعرض ${shown} من ${items.length} محطة.`
+      : `تُعرض ${items.length} من ${items.length} محطة.`;
+    empty.hidden = shown !== 0;
+    if (updateUrl) {
+      const p = new URLSearchParams();
+      if (q.value.trim()) p.set('q', q.value.trim());
+      if (era.value) p.set('era', era.value);
+      if (track.value) p.set('track', track.value);
+      if (shift.value) p.set('shift', shift.value);
+      const qs = p.toString();
+      history.replaceState(null, '', qs ? `?${qs}${location.hash}` : location.pathname + location.hash);
+    }
+  }
+
+  // قراءة المرشحات من الرابط حتى تكون الصفحة قابلة للمشاركة.
+  const params = new URLSearchParams(location.search);
+  q.value = params.get('q') ?? '';
+  const setSel = (el: HTMLSelectElement, v: string | null) => {
+    if (v && [...el.options].some((o) => o.value === v)) el.value = v;
+  };
+  setSel(era, params.get('era'));
+  setSel(track, params.get('track'));
+  setSel(shift, params.get('shift'));
+  apply(false);
+  if ([...params.keys()].length && !location.hash) {
+    document.querySelector('.tl-tools-wrap')?.scrollIntoView({ block: 'start' });
+  }
+
+  q.addEventListener('input', () => apply());
+  [era, track, shift].forEach((s) => s.addEventListener('change', () => apply()));
+  const reset = () => {
+    q.value = '';
+    era.value = track.value = shift.value = '';
+    apply();
+    q.focus();
+  };
+  form.addEventListener('reset', (e) => {
+    e.preventDefault();
+    reset();
+  });
+  document.getElementById('f-reset-2')?.addEventListener('click', reset);
+
+  // إبراز المحطة الحالية والحقبة الحالية أثناء التمرير.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          const it = en.target as HTMLElement;
+          items.forEach((i) => i.classList.remove('is-current'));
+          it.classList.add('is-current');
+          chartRows.forEach((r) => r.classList.remove('is-current'));
+          chartRows.get(it.dataset.id!)?.classList.add('is-current');
+          eraLinks.forEach((a) => {
+            const on = a.dataset.eraLink === it.dataset.era;
+            a.classList.toggle('is-current', on);
+            if (on) a.setAttribute('aria-current', 'location');
+            else a.removeAttribute('aria-current');
+          });
+        });
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    items.forEach((i) => io.observe(i));
+  }
+</script>
+
+<style>
+  .tl-intro {
+    padding-top: clamp(2rem, 5vw, 4rem);
+    padding-bottom: 1.5rem;
+  }
+  .tl-overview {
+    margin-bottom: 2.5rem;
+  }
+  .tl-tools-wrap {
+    background: var(--paper-2);
+    border-block: 1px solid var(--rule);
+    padding-block: 1rem 0.4rem;
+    scroll-margin-top: 4rem;
+  }
+  .tl-tools {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  .f {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+  .f-q {
+    grid-column: 1 / -1;
+  }
+  .f-actions {
+    align-content: end;
+  }
+  @media (min-width: 62rem) {
+    .tl-tools {
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      align-items: end;
+    }
+    .f-q {
+      grid-column: auto;
+    }
+  }
+  .tl-count {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin: 0.6rem 0 0;
+  }
+
+  .era-nav {
+    position: sticky;
+    top: 4rem;
+    z-index: 20;
+    background: color-mix(in srgb, var(--ivory) 96%, transparent);
+    border-bottom: 1px solid var(--rule);
+    padding-block: 0.4rem;
+    margin-top: 1rem;
+  }
+  .era-nav ol {
+    display: flex;
+    gap: 0.3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .era-nav a {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0.75rem;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .en-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--prussian-deep);
+  }
+  .en-range {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .era-nav a.is-current {
+    border-bottom-color: var(--copper);
+  }
+  .era-nav a.is-current .en-name {
+    color: var(--copper);
+  }
+  .era-nav a.is-empty {
+    opacity: 0.4;
+  }
+  @media (max-width: 40rem) {
+    .en-range {
+      display: none;
+    }
+  }
+
+  .tl-legend {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    margin-top: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1rem;
+    align-items: center;
+  }
+  .tl-legend p {
+    margin: 0;
+  }
+  .tl-legend ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+  }
+  .tl-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  @media (max-width: 48rem) {
+    .lg-hint {
+      display: none;
+    }
+  }
+
+  .tl-body {
+    padding-block: 2rem 5rem;
+  }
+  .tl-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--rule-strong);
+    background: var(--paper);
+  }
+  .tl-empty-title {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--prussian-deep);
+  }
+
+  .tl-era {
+    position: relative;
+    padding-top: 2rem;
+    scroll-margin-top: 8.5rem;
+  }
+  .era-head {
+    position: relative;
+    padding-inline-start: 3.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .era-head::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.55rem;
+    top: 0.4rem;
+    width: 1.3rem;
+    height: 1.3rem;
+    transform: rotate(45deg);
+    border: 1.5px solid var(--copper);
+    background: var(--ivory);
+  }
+  .era-range {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--copper);
+    margin: 0;
+  }
+  .era-head h2 {
+    margin-bottom: 0.2rem;
+  }
+  .era-intro {
+    color: var(--ink-soft);
+    max-width: 40rem;
+  }
+
+  .tl-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  .tl-list::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 1.2rem;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-inline-start: 1px solid var(--rule-strong);
+  }
+  .tl-item {
+    position: relative;
+    padding-inline-start: 3.2rem;
+    padding-bottom: 1.6rem;
+    scroll-margin-top: 9rem;
+  }
+  .tl-dot {
+    position: absolute;
+    inset-inline-start: calc(1.2rem - 6px);
+    top: 1.6rem;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--ivory);
+    border: 2px solid var(--prussian);
+    transition: background-color 0.25s ease, transform 0.25s ease;
+  }
+  .tl-item.is-current .tl-dot {
+    background: var(--copper);
+    border-color: var(--copper);
+    transform: scale(1.3);
+  }
+  .tl-card {
+    display: grid;
+    gap: 1.2rem;
+    padding: clamp(1rem, 2.5vw, 1.6rem);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .tl-item.is-current .tl-card {
+    border-color: var(--copper-soft);
+    box-shadow: 0 16px 36px -28px rgba(147, 80, 31, 0.6);
+  }
+  .tl-item:target .tl-card {
+    border-color: var(--copper);
+  }
+  @media (min-width: 52rem) {
+    .v-scene .tl-card {
+      grid-template-columns: 1fr minmax(16rem, 24rem);
+    }
+    .v-portrait .tl-card {
+      grid-template-columns: 1fr 10rem;
+    }
+  }
+  .v-plain .tl-card {
+    background:
+      linear-gradient(var(--paper), var(--paper)) padding-box;
+    border-style: solid;
+  }
+  .tl-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.8rem;
+    margin: 0 0 0.3rem;
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+  }
+  .tl-num {
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--copper);
+    font-weight: 600;
+  }
+  .tl-shift {
+    color: var(--ink-soft);
+  }
+  .tl-journey {
+    color: var(--prussian);
+    border: 1px solid var(--prussian);
+    padding: 0 0.5rem;
+    border-radius: 2px;
+    font-size: 0.75rem;
+  }
+  .tl-card h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.4rem;
+  }
+  .tl-q {
+    font-family: var(--font-display);
+    color: var(--prussian);
+    margin: 0.6rem 0 0.4rem;
+    padding-inline-start: 0.8rem;
+    border-inline-start: 2px solid var(--amber);
+  }
+  .tl-sum {
+    color: var(--ink-soft);
+    margin-bottom: 0.7rem;
+  }
+  .tl-tags {
+    margin-bottom: 0.9rem;
+  }
+  .tl-visual :global(img) {
+    width: 100%;
+    border: 1px solid var(--rule);
+  }
+  .tl-portrait {
+    max-width: 10rem;
+  }
+  @media (max-width: 51.99rem) {
+    .tl-visual {
+      order: -1;
+    }
+    .v-portrait .tl-visual {
+      display: none;
+    }
+  }
+  @media (max-width: 30rem) {
+    .tl-item {
+      padding-inline-start: 2.2rem;
+    }
+    .tl-list::before {
+      inset-inline-start: 0.7rem;
+    }
+    .tl-dot {
+      inset-inline-start: calc(0.7rem - 6px);
+    }
+    .era-head {
+      padding-inline-start: 2.2rem;
+    }
+    .era-head::before {
+      inset-inline-start: 0.1rem;
+    }
+  }
+</style>

@@ -1,0 +1,160 @@
+---
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+}
+const { headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+
+const speakers = [
+  { v: 'layla', label: 'ليلى، أمينة المكتبة', ref: 'ليلى' },
+  { v: 'salem', label: 'سالم، طالب زائر', ref: 'سالم' },
+  { v: 'guide', label: 'مرشدة المتحف', ref: 'مرشدة المتحف' },
+];
+const places = [
+  { v: 'hall', label: 'قاعة المخطوطات', ref: 'قاعة المخطوطات' },
+  { v: 'yard', label: 'فناء الجامعة', ref: 'فناء الجامعة' },
+  { v: 'station', label: 'محطة القطار', ref: 'محطة القطار' },
+];
+const times = [
+  { v: 't1', label: 'صباح الأحد، 9:00', ref: 'صباح الأحد، الساعة 9:00' },
+  { v: 't2', label: 'ظهر الثلاثاء، 12:30', ref: 'ظهر الثلاثاء، الساعة 12:30' },
+  { v: 't3', label: 'مساء الجمعة، 7:15', ref: 'مساء الجمعة، الساعة 7:15' },
+];
+const groups = [
+  { name: 'speaker', legend: 'مَن يتكلم؟', items: speakers },
+  { name: 'place', legend: 'أين؟', items: places },
+  { name: 'time', legend: 'متى؟', items: times },
+];
+---
+
+<section class="lab" data-lab="deixis" aria-labelledby="lab-deixis-title">
+  <div class="lab-head">
+    <p class="lab-kicker">نشاط تعليمي · أشخاص وأماكن متخيلة</p>
+    <H id="lab-deixis-title" class="lab-title">«أنا هنا الآن»</H>
+    <p class="lab-goal">
+      <strong>الهدف:</strong> ملاحظة أن بعض الكلمات لا تُفهم إحالتها إلا من موقف الكلام. غيّر المتكلم والمكان والوقت، وراقب ما تشير إليه كل كلمة.
+    </p>
+  </div>
+
+  <div class="dx-controls">
+    {
+      groups.map((g) => (
+        <fieldset class="lab-controls dx-group">
+          <legend>{g.legend}</legend>
+          {g.items.map((it, i) => (
+            <label class="pill">
+              <input type="radio" name={`dx-${g.name}`} value={it.v} data-ref={it.ref} checked={i === 0} />
+              {it.label}
+            </label>
+          ))}
+        </fieldset>
+      ))
+    }
+  </div>
+
+  <div class="dx-sentence" aria-live="polite">
+    <div class="dx-word">
+      <span class="dx-w">أنا</span>
+      <span class="dx-arrow" aria-hidden="true">↓</span>
+      <span class="dx-ref" data-slot="speaker">{speakers[0].ref}</span>
+      <span class="dx-role">المتكلم</span>
+    </div>
+    <div class="dx-word">
+      <span class="dx-w">هنا</span>
+      <span class="dx-arrow" aria-hidden="true">↓</span>
+      <span class="dx-ref" data-slot="place">{places[0].ref}</span>
+      <span class="dx-role">مكان التكلم</span>
+    </div>
+    <div class="dx-word">
+      <span class="dx-w">الآن</span>
+      <span class="dx-arrow" aria-hidden="true">↓</span>
+      <span class="dx-ref" data-slot="time">{times[0].ref}</span>
+      <span class="dx-role">وقت التكلم</span>
+    </div>
+  </div>
+
+  <p class="dx-reading" aria-live="polite">
+    التفسير الحالي: <span class="dx-full"></span>
+  </p>
+
+  <ul class="lab-points">
+    <li>معنى العبارة اللغوي ثابت في كل الحالات: المتكلم موجود في مكان التكلم في وقت التكلم.</li>
+    <li>الذي يتغير هو المرجع: الشخص والمكان والوقت الذي تشير إليه الكلمات في موقف بعينه.</li>
+    <li>حدود «هنا» قد تتسع أو تضيق: القاعة أو المبنى أو المدينة، والسياق هو ما يرجّح.</li>
+  </ul>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-lab="deixis"]').forEach((lab) => {
+    const full = lab.querySelector('.dx-full');
+    const get = (name: string) =>
+      lab.querySelector<HTMLInputElement>(`input[name="dx-${name}"]:checked`)?.dataset.ref ?? '';
+    const update = () => {
+      (['speaker', 'place', 'time'] as const).forEach((slot) => {
+        const el = lab.querySelector(`[data-slot="${slot}"]`);
+        if (el) el.textContent = get(slot);
+      });
+      if (full) full.textContent = `${get('speaker')} موجود${get('speaker') === 'سالم' ? '' : 'ة'} في ${get('place')} في ${get('time')}.`;
+    };
+    lab.querySelectorAll('input[type="radio"]').forEach((r) => r.addEventListener('change', update));
+    update();
+  });
+</script>
+
+<style>
+  .dx-controls {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .dx-sentence {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1.6rem 0 1rem;
+    text-align: center;
+  }
+  .dx-word {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.9rem 0.5rem;
+    background: var(--ivory);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--prussian);
+  }
+  .dx-w {
+    font-size: clamp(1.8rem, 1.3rem + 2.5vw, 2.8rem);
+    line-height: 1.4;
+    color: var(--prussian-deep);
+  }
+  .dx-arrow {
+    color: var(--copper);
+  }
+  .dx-ref {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--copper);
+    line-height: 1.5;
+  }
+  .dx-role {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .dx-reading {
+    padding: 0.6rem 1rem;
+    border-inline-start: 3px solid var(--copper);
+    background: var(--paper);
+  }
+  .dx-full {
+    font-weight: 600;
+  }
+  @media (max-width: 30rem) {
+    .dx-sentence {
+      gap: 0.4rem;
+    }
+    .dx-ref {
+      font-size: 0.85rem;
+    }
+  }
+</style>

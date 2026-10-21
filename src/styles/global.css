@@ -1,0 +1,529 @@
+/* ===== الهوية: عاج دافئ، أزرق بروسي حبري، نحاس وكهرمان ===== */
+:root {
+  color-scheme: light;
+  --ivory: #f5eedf;
+  --paper: #fbf7ee;
+  --paper-2: #efe5d0;
+  --ink: #1e2533;
+  --ink-soft: #4a4f5c;
+  --prussian: #17365d;
+  --prussian-deep: #0f2440;
+  --prussian-tint: #dfe5ec;
+  --copper: #93501f;
+  --copper-soft: #c98a54;
+  --amber: #c68a2e;
+  --rule: #d8cbb0;
+  --rule-strong: #b6a27b;
+
+  --font-display: 'Reem Kufi Variable', 'Noto Naskh Arabic Variable', 'Segoe UI', sans-serif;
+  --font-body: 'Noto Naskh Arabic Variable', 'Amiri', 'Times New Roman', serif;
+  --font-latin: Georgia, 'Times New Roman', serif;
+
+  --measure: 40rem;
+  --wide: 74rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --radius: 3px;
+
+  --step--1: clamp(0.84rem, 0.82rem + 0.1vw, 0.9rem);
+  --step-0: clamp(1.06rem, 1.02rem + 0.2vw, 1.16rem);
+  --step-1: clamp(1.25rem, 1.18rem + 0.35vw, 1.45rem);
+  --step-2: clamp(1.5rem, 1.35rem + 0.7vw, 1.95rem);
+  --step-3: clamp(1.85rem, 1.55rem + 1.4vw, 2.75rem);
+  --step-4: clamp(2.3rem, 1.8rem + 2.6vw, 4.1rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background-color: var(--ivory);
+  /* ملمس ورقي خفيف جداً */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .055 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.95;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+picture {
+  display: block;
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--prussian-deep);
+  line-height: 1.35;
+  font-weight: 600;
+  margin: 0 0 0.6em;
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--step-4);
+  line-height: 1.2;
+}
+h2 {
+  font-size: var(--step-3);
+}
+h3 {
+  font-size: var(--step-1);
+}
+
+p {
+  margin: 0 0 1em;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--prussian);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  text-decoration-color: color-mix(in srgb, var(--copper) 60%, transparent);
+}
+a:hover {
+  color: var(--copper);
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: #f0d9b2;
+  color: var(--ink);
+}
+
+/* النصوص اللاتينية داخل السياق العربي */
+.latin,
+[lang='en'],
+[lang='fr'],
+[lang='la'] {
+  font-family: var(--font-latin);
+  font-size: 0.92em;
+  unicode-bidi: isolate;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -4rem;
+  z-index: 100;
+  background: var(--prussian-deep);
+  color: var(--paper);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-display);
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ===== التخطيط ===== */
+.wrap {
+  width: min(100% - 2 * var(--gutter), var(--wide));
+  margin-inline: auto;
+}
+.measure {
+  max-width: var(--measure);
+}
+.section {
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+.band {
+  background: var(--paper-2);
+  border-block: 1px solid var(--rule);
+}
+.band-dark {
+  background: var(--prussian-deep);
+  color: #ece4d3;
+}
+.band-dark h2,
+.band-dark h3 {
+  color: #f6efe0;
+}
+.band-dark a {
+  color: #f2d3a7;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  color: var(--copper);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+.eyebrow::before {
+  content: '';
+  width: 1.8rem;
+  height: 1px;
+  background: currentColor;
+}
+.band-dark .eyebrow {
+  color: #e2b07a;
+}
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.85;
+  color: var(--ink-soft);
+}
+
+/* زخرفة: خط مزدوج رفيع بمعين نحاسي */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--copper);
+  margin-block: 2.5rem;
+}
+.ornament::before,
+.ornament::after {
+  content: '';
+  flex: 1;
+  height: 3px;
+  border-block: 1px solid var(--rule-strong);
+}
+
+/* ===== أزرار ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 2.9rem;
+  padding: 0.45rem 1.4rem;
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid var(--prussian);
+  border-radius: var(--radius);
+  background: var(--prussian);
+  color: var(--paper);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.btn:hover {
+  background: var(--prussian-deep);
+  color: #fff;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--prussian);
+}
+.btn-ghost:hover {
+  background: var(--prussian-tint);
+  color: var(--prussian-deep);
+}
+.btn-small {
+  min-height: 2.4rem;
+  padding: 0.25rem 0.9rem;
+  font-size: var(--step--1);
+}
+.arrow {
+  display: inline-block;
+}
+
+/* رابط «اكتشف» */
+.more {
+  font-family: var(--font-display);
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.more::after {
+  content: '←';
+  transition: transform 0.2s ease;
+}
+.more:hover::after {
+  transform: translateX(-4px);
+}
+
+/* ===== الوسوم ===== */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tag {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  padding: 0.05rem 0.6rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.tag:hover {
+  border-color: var(--copper);
+  color: var(--copper);
+}
+
+/* ===== الأشكال ===== */
+figure {
+  margin: 0;
+}
+figcaption,
+.caption {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin-top: 0.6rem;
+  padding-inline-start: 0.8rem;
+  border-inline-start: 2px solid var(--copper-soft);
+}
+.frame {
+  padding: 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 0 var(--rule), 0 18px 40px -28px rgba(30, 37, 51, 0.45);
+}
+.frame img {
+  width: 100%;
+}
+
+/* ===== جداول ===== */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  text-align: start;
+  vertical-align: top;
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid var(--rule);
+}
+th {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--prussian-deep);
+  border-bottom: 2px solid var(--rule-strong);
+}
+
+/* ===== حقول ===== */
+input[type='search'],
+input[type='text'],
+select {
+  font: inherit;
+  font-size: var(--step-0);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.75rem;
+  min-height: 2.75rem;
+  width: 100%;
+}
+input:focus-visible,
+select:focus-visible {
+  outline-offset: 1px;
+}
+label {
+  font-family: var(--font-display);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+details > summary {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ظهور هادئ للمقاطع */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: rise 0.7s ease both;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .site-header,
+  .site-footer,
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ===== المختبر: أنشطة تعليمية ===== */
+.lab {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: clamp(1.1rem, 3.5vw, 2.2rem);
+  box-shadow: 0 22px 44px -36px rgba(15, 36, 64, 0.55);
+}
+.lab::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  pointer-events: none;
+}
+.lab > * {
+  position: relative;
+}
+.lab-kicker {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  color: var(--copper);
+  margin-bottom: 0.2rem;
+}
+.lab-title {
+  font-size: var(--step-2);
+  margin-bottom: 0.4rem;
+}
+.lab-goal {
+  color: var(--ink-soft);
+  max-width: 44rem;
+}
+.lab-goal strong {
+  color: var(--prussian-deep);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.lab-controls {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+.lab-controls legend {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--prussian-deep);
+  margin-bottom: 0.35rem;
+  padding: 0;
+  float: inline-start;
+  width: 100%;
+}
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.6rem;
+  padding: 0.2rem 0.95rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.pill:hover {
+  border-color: var(--prussian);
+}
+.pill input {
+  accent-color: var(--prussian);
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+.pill:has(input:checked) {
+  background: var(--prussian);
+  border-color: var(--prussian);
+  color: var(--paper);
+}
+.pill:has(input:checked) input {
+  accent-color: var(--amber);
+}
+.pill:has(input:focus-visible) {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+.lab-note {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.8rem;
+  margin: 1rem 0 0;
+}
+.lab-points {
+  margin: 1rem 0 0;
+  padding-inline-start: 1.2rem;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.lab-points li::marker {
+  color: var(--copper);
+}

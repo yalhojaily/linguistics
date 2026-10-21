@@ -1,0 +1,271 @@
+---
+import '@fontsource-variable/reem-kufi';
+import '@fontsource-variable/noto-naskh-arabic';
+import '../styles/global.css';
+import { nav, url } from '../lib/paths';
+import { site } from '../data/editorial';
+
+interface Props {
+  title?: string;
+  description?: string;
+  current?: string;
+  image?: string;
+}
+
+const { title, description = 'رحلة عربية مصورة في تاريخ دراسة اللغة: 26 محطة، من قوائم الكتبة إلى النماذج العصبية، مع مصادرها العلمية.', current = '' } = Astro.props;
+const fullTitle = title ? `${title} — ${site.title}` : `${site.title} — ${site.subtitle}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => current === href || path.startsWith(url(href));
+---
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    <meta name="theme-color" content="#f5eedf" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="ar_AR" />
+    <meta property="og:type" content="website" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <link rel="icon" href={url('favicon.svg')} type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">انتقل إلى المحتوى</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="wordmark" href={url()} aria-label={`${site.title} — الصفحة الرئيسية`}>
+          <span class="wm-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="30" height="30"><rect x="4" y="4" width="24" height="24" transform="rotate(45 16 16)" fill="none" stroke="currentColor" stroke-width="1.5"></rect><circle cx="16" cy="16" r="3.2" fill="currentColor"></circle></svg>
+          </span>
+          <span class="wm-text">{site.title}</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+          <span class="menu-icon" aria-hidden="true"></span><span>القائمة</span>
+        </button>
+        <nav id="primary-nav" class="primary-nav" aria-label="التنقل الرئيسي">
+          <ul>
+            {
+              nav.map((n) => (
+                <li>
+                  <a href={url(n.href)} aria-current={isCurrent(n.href) ? 'page' : undefined}>
+                    {n.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div>
+          <p class="footer-title">{site.title}</p>
+          <p>
+            موقع تعليمي عن تاريخ دراسة اللغة، مبني على مادة مرجعية أُعدّت وتُحقق من روابطها في {site.preparedOn}. الأمثلة مؤلفة للتعليم، وكل الصور أعمال فنية مولّدة، والبورتريهات تصورات فنية لا صور أرشيفية.
+          </p>
+        </div>
+        <nav aria-label="روابط التذييل">
+          <ul>
+            {nav.map((n) => (<li><a href={url(n.href)}>{n.label}</a></li>))}
+          </ul>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+      const navEl = document.getElementById('primary-nav');
+      if (toggle && navEl) {
+        const set = (open: boolean) => {
+          toggle.setAttribute('aria-expanded', String(open));
+          navEl.classList.toggle('is-open', open);
+        };
+        toggle.addEventListener('click', () => set(toggle.getAttribute('aria-expanded') !== 'true'));
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+            set(false);
+            toggle.focus();
+          }
+        });
+        document.addEventListener('click', (e) => {
+          const t = e.target as Node;
+          if (!navEl.contains(t) && !toggle.contains(t)) set(false);
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--ivory) 94%, transparent);
+    border-bottom: 1px solid var(--rule);
+    backdrop-filter: saturate(1.1);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4rem;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--prussian-deep);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+  .wm-mark {
+    color: var(--copper);
+  }
+  .menu-toggle {
+    display: none;
+  }
+  .primary-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .primary-nav a {
+    display: block;
+    padding: 0.35rem 0.65rem;
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+  }
+  .primary-nav a:hover {
+    color: var(--copper);
+  }
+  .primary-nav a[aria-current='page'] {
+    color: var(--prussian);
+    border-bottom-color: var(--copper);
+  }
+  @media (max-width: 61.99rem) {
+    .header-inner {
+      flex-wrap: wrap;
+    }
+    :global(html.js) .menu-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 2.75rem;
+      padding: 0 0.85rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius);
+      background: var(--paper);
+      font: inherit;
+      font-family: var(--font-display);
+      font-size: 0.98rem;
+      color: var(--prussian-deep);
+      cursor: pointer;
+    }
+    .menu-icon,
+    .menu-icon::before,
+    .menu-icon::after {
+      display: block;
+      width: 18px;
+      height: 1.5px;
+      background: currentColor;
+      position: relative;
+    }
+    .menu-icon::before,
+    .menu-icon::after {
+      content: '';
+      position: absolute;
+      inset-inline-start: 0;
+    }
+    .menu-icon::before {
+      top: -5px;
+    }
+    .menu-icon::after {
+      top: 5px;
+    }
+    .primary-nav {
+      width: 100%;
+    }
+    :global(html.js) .primary-nav {
+      display: none;
+    }
+    :global(html.js) .primary-nav.is-open {
+      display: block;
+      position: absolute;
+      inset-inline: 0;
+      top: 100%;
+      background: var(--paper);
+      border-bottom: 1px solid var(--rule-strong);
+      box-shadow: 0 20px 30px -20px rgba(15, 36, 64, 0.35);
+    }
+    :global(html.js) .primary-nav ul {
+      flex-direction: column;
+      padding: 0.5rem var(--gutter) 1rem;
+    }
+    :global(html.js) .primary-nav a {
+      padding: 0.7rem 0.25rem;
+      font-size: 1.1rem;
+      border-bottom: 1px solid var(--rule);
+    }
+  }
+
+  main {
+    display: block;
+  }
+  main:focus {
+    outline: none;
+  }
+
+  .site-footer {
+    margin-top: 0;
+    background: var(--prussian-deep);
+    color: #d9d2c3;
+    padding-block: 3rem;
+    font-size: var(--step--1);
+  }
+  .footer-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 48rem) {
+    .footer-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+  .footer-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: #f4ecdc;
+    margin-bottom: 0.5rem;
+  }
+  .site-footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    columns: 2;
+  }
+  .site-footer a {
+    color: #f0cfa1;
+  }
+</style>

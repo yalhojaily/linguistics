@@ -1,0 +1,212 @@
+---
+import Base from '../layouts/Base.astro';
+import KindMark from '../components/KindMark.astro';
+import { corrections, futureTopics, site } from '../data/editorial';
+import { dateKinds, relations, shifts } from '../data/taxonomy';
+import { images } from '../data/images';
+import { url } from '../lib/paths';
+import type { DateKind } from '../data/types';
+---
+
+<Base title="المنهجية" description="كيف بُني محتوى الموقع: أنواع المحتوى، والتواريخ، والعلاقات بين المحطات، وسياسة الصور والمصادر." current="method/">
+  <header class="wrap m-intro">
+    <p class="eyebrow">المنهجية</p>
+    <h1>كيف بُني هذا الموقع؟</h1>
+    <p class="lede measure">
+      مادة منتقاة لبناء رحلة تعليمية، وليست استقصاءً لكل ما كُتب في تاريخ اللسانيات. بُنيت على مراجع جامعية، وفصول من كتب تاريخية متخصصة، وموسوعات أكاديمية، وأبحاث أصلية، ومواقع مؤسسات علمية. أُعدّت المادة وتُحقق من روابطها في {site.preparedOn}.
+    </p>
+  </header>
+
+  <div class="wrap m-body">
+    <section id="kinds">
+      <h2>ثلاثة أنواع من المحتوى</h2>
+      <dl class="m-dl">
+        <div><dt>وقائع تاريخية</dt><dd>مثل نشر كتاب أو ظهور مشروع بحثي، وترتبط بمصدر.</dd></div>
+        <div><dt>شرح مبسّط</dt><dd>صياغة عربية تفسيرية لمفهوم، لا ترجمة حرفية للمصدر.</dd></div>
+        <div><dt>أمثلة مؤلفة</dt><dd>جمل وأنشطة كُتبت للتعليم، موسومة بوضوح، ولا تُنسب إلى أصحاب النظريات ولا تُقدَّم بيانات لغوية حقيقية.</dd></div>
+      </dl>
+      <p>
+        أرقام المحطات تنظيمية. حين تتداخل الفترات، لا يدل ترتيب القراءة على أن اتجاهاً نشأ من الآخر. ويركز الموقع على تاريخ <em>دراسة</em> اللغة، لا على تاريخ تطور اللغات نفسها.
+      </p>
+    </section>
+
+    <section id="dates">
+      <h2>كيف نقرأ التواريخ؟</h2>
+      <p>التواريخ الممتدة تقريبية وتصف فترات نشاط أو تبلور. السنة المفردة تشير إلى واقعة محددة، ولا تعني بالضرورة بداية الحقل. ولا يُوضع حدث مختلف على تأريخه في يوم أو شهر مختلق.</p>
+      <ul class="m-kinds">
+        {(Object.keys(dateKinds) as DateKind[]).map((k) => (
+          <li><KindMark kind={k} size={16} /><strong>{dateKinds[k].name}</strong> — {dateKinds[k].hint}.</li>
+        ))}
+      </ul>
+      <p>ونميّز أيضاً نوع التحول الذي تمثله كل محطة:</p>
+      <ul class="m-shifts">
+        {Object.values(shifts).map((v) => <li><strong>{v.name}:</strong> {v.hint}.</li>)}
+      </ul>
+      <p>
+        في <a href={url('timeline/')}>الرسم العام</a> تأخذ كل حقبة عرضاً متساوياً، فالمسافات البصرية غير متناسبة مع الزمن، والخط المتقطع يعني أن الاتجاه استمر بعد ظهور ما تلاه.
+      </p>
+    </section>
+
+    <section id="relations">
+      <h2>العلاقات بين المحطات</h2>
+      <ul class="m-shifts">
+        <li><strong>{relations.before}:</strong> حين لا تثبت علاقة تأثير.</li>
+        <li><strong>{relations.near}:</strong> للمقارنة المفهومية، دون نسب تاريخي.</li>
+        <li><strong>تأثر به:</strong> لا تُستخدم إلا حين يوجد مصدر متخصص يثبتها؛ ولم تُستخدم في الإصدار الحالي.</li>
+      </ul>
+      <p>المسارات الموضوعية تنظيم تحريري للاستكشاف، وليست مخططاً مثبتاً لانتقال التأثير. قد تظهر المحطة في أكثر من مسار.</p>
+    </section>
+
+    <section id="images">
+      <h2>الصور</h2>
+      <p>
+        الصور الاثنتا عشرة أعمال فنية مولّدة أُعدّت لهذا المشروع. المشاهد العامة رمزية، والبورتريهات إما تصورات تخيّلية لأعلام لا تُعرف ملامحهم، وإما بورتريهات مولّدة لأعلام حديثين، وليست صوراً أرشيفية. لا تُعدّ الزخارف أو الكتابات الظاهرة داخل الصور مصدراً لأي معلومة.
+      </p>
+      <div class="m-table">
+        <table>
+          <thead><tr><th scope="col">عنوان الصورة</th><th scope="col">طبيعتها</th></tr></thead>
+          <tbody>
+            {Object.values(images).map((im) => <tr><td>{im.title}</td><td>{im.caption}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="corrections">
+      <h2>ما الذي لا يقوله الموقع؟</h2>
+      <p>ضوابط تحريرية مستخلصة من تنوع التاريخ والمناهج، وليست قائمة أخطاء منسوبة إلى مرجع واحد.</p>
+      <ul class="corr">
+        {corrections.map((c) => (
+          <li>
+            <p class="c-wrong"><span>صياغة مضللة</span>{c.wrong}</p>
+            <p class="c-better"><span>صياغة أدق</span>{c.better}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section id="policy">
+      <h2>سياسة المصادر</h2>
+      <ul class="m-shifts">
+        <li>ربط كل واقعة جوهرية بمصدر يدعمها تحديداً.</li>
+        <li>فصل تاريخ الحدث عن تاريخ إتاحة النص إلكترونياً؛ فقد يظهر بحث قديم بتاريخ إتاحة حديث.</li>
+        <li>عدم الاستشهاد بملخص فصل لإسناد تفاصيل غير موجودة فيه.</li>
+        <li>عدم إعادة استخدام مثال مصطنع بوصفه بيانات لغوية حقيقية.</li>
+        <li>توضيح الخلاف في تأريخ القدماء أو نسبة الأفكار بدلاً من إخفائه.</li>
+        <li>التمييز بين مرجع تاريخي يصف مدرسة، وورقة تمثل موقف أصحابها.</li>
+        <li>تحديث قسم الحوسبة مستقلاً؛ فالتاريخ القديم أكثر استقراراً من وصف أحدث النماذج.</li>
+      </ul>
+      <p><a class="more" href={url('sources/')}>المراجع المشروحة</a></p>
+    </section>
+
+    <section id="future">
+      <h2>خارج التفصيل الحالي</h2>
+      <p>موضوعات ليست غائبة عن تاريخ العلم، لكنها خارج تفصيل هذا الإصدار: {futureTopics.join('، ')}.</p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .m-intro {
+    padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+  }
+  .m-body {
+    max-width: 46rem;
+    padding-bottom: 5rem;
+  }
+  .m-body section {
+    margin-top: 3rem;
+    scroll-margin-top: 5rem;
+  }
+  .m-body h2 {
+    font-size: var(--step-2);
+  }
+  .m-dl {
+    margin: 0 0 1.2rem;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .m-dl > div {
+    padding: 0.8rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-inline-start: 4px solid var(--prussian);
+  }
+  .m-dl dt {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+  .m-dl dd {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  .m-kinds,
+  .m-shifts {
+    padding-inline-start: 1.2rem;
+  }
+  .m-kinds {
+    list-style: none;
+    padding: 0;
+  }
+  .m-kinds li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-block: 0.25rem;
+  }
+  .m-kinds strong,
+  .m-shifts strong {
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+  .m-shifts li::marker {
+    color: var(--copper);
+  }
+  .m-table {
+    overflow-x: auto;
+    font-size: var(--step--1);
+  }
+  .corr {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.8rem;
+  }
+  .corr li {
+    display: grid;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  @media (min-width: 40rem) {
+    .corr li {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .corr p {
+    margin: 0;
+    padding: 0.7rem 1rem;
+  }
+  .corr span {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+  }
+  .c-wrong {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--copper) 55%, transparent);
+  }
+  .c-wrong span {
+    text-decoration: none;
+    color: var(--copper);
+    display: inline-block;
+    width: 100%;
+  }
+  .c-better {
+    border-inline-start: 1px solid var(--rule);
+  }
+  .c-better span {
+    color: var(--prussian);
+  }
+</style>

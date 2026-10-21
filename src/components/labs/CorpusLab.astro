@@ -1,0 +1,290 @@
+---
+import { corpus, genres, suggestedQueries } from '../../data/corpus';
+
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+}
+const { headingLevel = 'h3' } = Astro.props;
+const H = headingLevel;
+
+const wordCount = (t: string) => t.split(/\s+/).filter((w) => /[؀-ۿ]/.test(w)).length;
+const totalWords = corpus.reduce((n, c) => n + wordCount(c.text), 0);
+const perGenre = Object.fromEntries(
+  Object.keys(genres).map((g) => [g, corpus.filter((c) => c.genre === g).reduce((n, c) => n + wordCount(c.text), 0)]),
+);
+---
+
+<section class="lab" data-lab="corpus" aria-labelledby="lab-corpus-title">
+  <div class="lab-head">
+    <p class="lab-kicker">نشاط تعليمي · نصوص مؤلفة</p>
+    <H id="lab-corpus-title" class="lab-title">مدونة تعليمية صغيرة</H>
+    <p class="lab-goal">
+      <strong>الهدف:</strong> تجربة البحث في مدونة: كيف تُعرض السياقات، وكيف يُحسب التكرار، وكيف تغيّر طريقة البحث النتيجة.
+    </p>
+  </div>
+
+  <div class="cp-card" role="note">
+    <p>
+      <strong>بطاقة المدونة:</strong> {corpus.length} نصاً قصيراً، نحو {totalWords} كلمة، في ثلاثة أنواع:
+      {Object.entries(genres).map(([g, name], i) => <>{i > 0 && '، '}{name} ({perGenre[g]} كلمة)</>)}.
+      النصوص <strong>مؤلفة لهذا الموقع سنة 2026</strong> لأغراض التدريب، وليست مأخوذة من استعمال فعلي؛ لذلك لا تصلح أرقامها دليلاً على العربية.
+    </p>
+  </div>
+
+  <form class="cp-form" role="search" onsubmit="return false">
+    <div class="cp-field">
+      <label for="cp-q">ابحث عن كلمة</label>
+      <input id="cp-q" type="search" autocomplete="off" placeholder="مثلاً: كتاب" />
+    </div>
+    <fieldset class="lab-controls cp-mode">
+      <legend>طريقة المطابقة</legend>
+      <label class="pill"><input type="radio" name="cp-mode" value="prefix" checked /> الكلمة مع السوابق (ال، و، ف، ب، ل، ك)</label>
+      <label class="pill"><input type="radio" name="cp-mode" value="exact" /> الكلمة كما هي تماماً</label>
+      <label class="pill"><input type="radio" name="cp-mode" value="contains" /> أي كلمة تحتويها</label>
+    </fieldset>
+    <div class="cp-suggest">
+      <span>جرّب:</span>
+      {suggestedQueries.map((q) => <button type="button" class="tag cp-sugg" data-q={q}>{q}</button>)}
+    </div>
+  </form>
+
+  <div class="cp-results" aria-live="polite">
+    <p class="cp-summary">اكتب كلمة لعرض سياقاتها.</p>
+    <div class="cp-dist" hidden></div>
+    <ol class="cp-kwic" hidden></ol>
+  </div>
+
+  <p class="lab-note">
+    لاحظ الفرق بين طرق المطابقة: البحث عن «كتاب» داخل الكلمات يلتقط «الكتابة» أيضاً، والمطابقة التامة تُسقط «الكتاب». تكرار الكلمة هنا يصف نصوص هذه المدونة الصغيرة فقط، ولا يدل على شيوعها أو فصاحتها.
+  </p>
+
+  <script type="application/json" class="cp-data" set:html={JSON.stringify({ corpus, genres })} />
+</section>
+
+<script>
+  type Text = { id: string; genre: string; text: string };
+  const strip = (s: string) =>
+    s
+      .replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي');
+  const tokenize = (t: string) => t.split(/\s+/).filter(Boolean);
+  const bare = (tok: string) => tok.replace(/[^؀-ۿ]/g, '');
+  const PREFIX = /^(?:و|ف)?(?:ب|ل|ك)?(?:ال)?/;
+
+  function matches(tok: string, q: string, mode: string): boolean {
+    const w = strip(bare(tok));
+    if (!w) return false;
+    if (mode === 'exact') return w === q;
+    if (mode === 'contains') return w.includes(q);
+    if (w === q) return true;
+    // اسمح بالسوابق الشائعة؛ ونقبل حذف ألف «ال» بعد اللام (للكتاب).
+    const m = w.match(PREFIX);
+    const rest = m ? w.slice(m[0].length) : w;
+    if (rest === q) return true;
+    const qNoAl = q.replace(/^ال/, '');
+    return rest === qNoAl || w.replace(/^(?:و|ف)?لل/, '') === qNoAl;
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-lab="corpus"]').forEach((lab) => {
+    const data = JSON.parse(lab.querySelector('.cp-data')!.textContent!) as {
+      corpus: Text[];
+      genres: Record<string, string>;
+    };
+    const input = lab.querySelector<HTMLInputElement>('#cp-q')!;
+    const summary = lab.querySelector('.cp-summary')!;
+    const dist = lab.querySelector<HTMLElement>('.cp-dist')!;
+    const kwic = lab.querySelector<HTMLOListElement>('.cp-kwic')!;
+    const mode = () => lab.querySelector<HTMLInputElement>('input[name="cp-mode"]:checked')?.value ?? 'prefix';
+
+    const run = () => {
+      const raw = input.value.trim();
+      const q = strip(bare(raw));
+      kwic.innerHTML = '';
+      dist.innerHTML = '';
+      if (!q) {
+        summary.textContent = 'اكتب كلمة لعرض سياقاتها.';
+        dist.hidden = kwic.hidden = true;
+        return;
+      }
+      const hits: { t: Text; i: number; toks: string[] }[] = [];
+      for (const t of data.corpus) {
+        const toks = tokenize(t.text);
+        toks.forEach((tok, i) => {
+          if (matches(tok, q, mode())) hits.push({ t, i, toks });
+        });
+      }
+      if (hits.length === 0) {
+        summary.innerHTML = '';
+        const p = document.createElement('span');
+        p.textContent = `لا نتائج لـ«${raw}» بهذه الطريقة في المطابقة. جرّب طريقة أخرى، أو كلمة من الاقتراحات. غياب الكلمة من هذه العينة الصغيرة لا يعني أنها غير مستعملة.`;
+        summary.append(p);
+        dist.hidden = kwic.hidden = true;
+        return;
+      }
+      const texts = new Set(hits.map((h) => h.t.id)).size;
+      summary.textContent = `${hits.length} ورود في ${texts} من ${data.corpus.length} نصاً.`;
+
+      const counts: Record<string, number> = {};
+      Object.keys(data.genres).forEach((g) => (counts[g] = 0));
+      hits.forEach((h) => counts[h.t.genre]++);
+      const max = Math.max(...Object.values(counts), 1);
+      Object.entries(data.genres).forEach(([g, name]) => {
+        const row = document.createElement('div');
+        row.className = 'cp-bar';
+        row.innerHTML = `<span class="cp-bar-name"></span><span class="cp-bar-track"><span class="cp-bar-fill"></span></span><span class="cp-bar-n"></span>`;
+        row.querySelector('.cp-bar-name')!.textContent = name;
+        (row.querySelector('.cp-bar-fill') as HTMLElement).style.width = `${(counts[g] / max) * 100}%`;
+        row.querySelector('.cp-bar-n')!.textContent = String(counts[g]);
+        dist.append(row);
+      });
+      dist.hidden = false;
+
+      hits.forEach((h) => {
+        const li = document.createElement('li');
+        const before = h.toks.slice(Math.max(0, h.i - 6), h.i).join(' ');
+        const after = h.toks.slice(h.i + 1, h.i + 7).join(' ');
+        const b = document.createElement('span');
+        b.className = 'k-before';
+        b.textContent = (h.i > 6 ? '… ' : '') + before;
+        const k = document.createElement('mark');
+        k.textContent = h.toks[h.i];
+        const a = document.createElement('span');
+        a.className = 'k-after';
+        a.textContent = after + (h.i + 7 < h.toks.length ? ' …' : '');
+        const g = document.createElement('span');
+        g.className = 'k-genre';
+        g.textContent = data.genres[h.t.genre];
+        li.append(b, k, a, g);
+        kwic.append(li);
+      });
+      kwic.hidden = false;
+    };
+
+    input.addEventListener('input', run);
+    lab.querySelectorAll('input[name="cp-mode"]').forEach((r) => r.addEventListener('change', run));
+    lab.querySelectorAll<HTMLButtonElement>('.cp-sugg').forEach((b) =>
+      b.addEventListener('click', () => {
+        input.value = b.dataset.q ?? '';
+        run();
+        input.focus();
+      }),
+    );
+  });
+</script>
+
+<style>
+  .cp-card {
+    font-size: var(--step--1);
+    background: var(--ivory);
+    border: 1px dashed var(--rule-strong);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .cp-card p {
+    margin: 0;
+  }
+  .cp-form {
+    display: grid;
+    gap: 0.8rem;
+  }
+  .cp-field {
+    display: grid;
+    gap: 0.3rem;
+    max-width: 26rem;
+  }
+  .cp-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--step--1);
+  }
+  .cp-sugg {
+    cursor: pointer;
+    font-size: 0.9rem;
+    min-height: 2rem;
+  }
+  .cp-results {
+    margin-top: 1.2rem;
+  }
+  .cp-summary {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+  .cp-dist {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 30rem;
+    margin-bottom: 1rem;
+  }
+  .cp-dist :global(.cp-bar) {
+    display: grid;
+    grid-template-columns: 6rem 1fr 2rem;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: var(--step--1);
+  }
+  .cp-dist :global(.cp-bar-track) {
+    height: 0.6rem;
+    background: var(--paper-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .cp-dist :global(.cp-bar-fill) {
+    display: block;
+    height: 100%;
+    background: var(--prussian);
+    border-radius: 99px;
+  }
+  .cp-dist :global(.cp-bar-n) {
+    font-family: var(--font-display);
+    color: var(--copper);
+  }
+  .cp-kwic {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--rule-strong);
+    max-height: 26rem;
+    overflow-y: auto;
+  }
+  .cp-kwic :global(li) {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto;
+    gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.45rem 0.25rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+  .cp-kwic :global(.k-before) {
+    text-align: end;
+    color: var(--ink-soft);
+  }
+  .cp-kwic :global(.k-after) {
+    color: var(--ink-soft);
+  }
+  .cp-kwic :global(mark) {
+    background: #f1dcb8;
+    color: var(--prussian-deep);
+    font-weight: 700;
+    padding: 0 0.3rem;
+    border-radius: 2px;
+  }
+  .cp-kwic :global(.k-genre) {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    color: var(--copper);
+    white-space: nowrap;
+  }
+  @media (max-width: 36rem) {
+    .cp-kwic :global(li) {
+      grid-template-columns: 1fr auto 1fr;
+    }
+    .cp-kwic :global(.k-genre) {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

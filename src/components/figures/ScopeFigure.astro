@@ -1,0 +1,107 @@
+---
+// رسم ثابت يوضح قراءتين ممكنتين لجملة «كل الطلاب قرأوا كتاباً».
+const students = [0, 1, 2];
+const sy = (i: number) => 34 + i * 46;
+---
+
+<figure class="scope">
+  <div class="scope-panels">
+    {
+      [
+        { key: 'one', title: 'قراءة أولى', text: 'كتاب واحد بعينه قرأه الطلاب جميعاً.' },
+        { key: 'each', title: 'قراءة ثانية', text: 'كل طالب قرأ كتاباً، وقد تختلف الكتب.' },
+      ].map((p) => (
+        <div class="scope-panel">
+          <svg viewBox="0 0 260 170" role="img" aria-label={`${p.title}: ${p.text}`}>
+            {students.map((i) => (
+              <g>
+                <circle cx="215" cy={sy(i)} r="13" class="st" />
+                <text x="215" y={sy(i) + 5} text-anchor="middle" class="st-t">{['أ', 'ب', 'ج'][i]}</text>
+              </g>
+            ))}
+            {p.key === 'one' ? (
+              <>
+                {students.map((i) => (
+                  <line x1="200" y1={sy(i)} x2="78" y2="80" class="ln" />
+                ))}
+                <rect x="40" y="62" width="34" height="38" rx="2" class="bk" />
+                <line x1="57" y1="62" x2="57" y2="100" class="ln-t" />
+              </>
+            ) : (
+              <>
+                {students.map((i) => (
+                  <>
+                    <line x1="200" y1={sy(i)} x2="78" y2={sy(i)} class="ln" />
+                    <rect x="48" y={sy(i) - 14} width="26" height="28" rx="2" class="bk" />
+                    <line x1="61" y1={sy(i) - 14} x2="61" y2={sy(i) + 14} class="ln-t" />
+                  </>
+                ))}
+              </>
+            )}
+          </svg>
+          <p class="scope-title">{p.title}</p>
+          <p class="scope-text">{p.text}</p>
+        </div>
+      ))
+    }
+  </div>
+  <figcaption>
+    رسم توضيحي لإمكانين في التحليل، لا لواقعة محددة. الدوائر طلاب، والمستطيلات كتب.
+  </figcaption>
+</figure>
+
+<style>
+  .scope {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1.2rem;
+  }
+  .scope-panels {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 36rem) {
+    .scope-panels {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .scope-panel {
+    text-align: center;
+  }
+  .scope-panel svg {
+    width: 100%;
+    max-width: 280px;
+    margin-inline: auto;
+  }
+  .st {
+    fill: var(--prussian);
+  }
+  .st-t {
+    fill: var(--paper);
+    font-size: 13px;
+    font-family: var(--font-display);
+  }
+  .ln {
+    stroke: var(--copper);
+    stroke-width: 1.8;
+  }
+  .ln-t {
+    stroke: var(--copper);
+    stroke-width: 1.3;
+  }
+  .bk {
+    fill: var(--paper);
+    stroke: var(--copper);
+    stroke-width: 2;
+  }
+  .scope-title {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+    margin: 0.4rem 0 0;
+  }
+  .scope-text {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    margin: 0;
+  }
+</style>

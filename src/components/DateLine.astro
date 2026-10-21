@@ -1,0 +1,67 @@
+---
+import KindMark from './KindMark.astro';
+import { dateKinds } from '../data/taxonomy';
+import type { StationDate } from '../data/types';
+
+interface Props {
+  dates: StationDate[];
+  compact?: boolean;
+}
+const { dates, compact = false } = Astro.props;
+---
+
+<ul class:list={['dates', { compact }]}>
+  {
+    dates.map((d) => (
+      <li>
+        <KindMark kind={d.kind} />
+        <span class="d-label">{d.label}</span>
+        <span class="d-kind">{dateKinds[d.kind].name}</span>
+        {!compact && d.note && <span class="d-note">{d.note}</span>}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .dates {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.2rem;
+  }
+  .dates li {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem;
+    line-height: 1.6;
+  }
+  .dates li :global(.kind-mark) {
+    align-self: center;
+  }
+  .d-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--prussian-deep);
+  }
+  .d-kind {
+    font-size: 0.8rem;
+    color: var(--copper);
+    font-family: var(--font-display);
+  }
+  .d-kind::before {
+    content: '· ';
+  }
+  .d-note {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    flex-basis: 100%;
+    padding-inline-start: 2.1rem;
+  }
+  .compact .d-label {
+    font-size: 0.95rem;
+  }
+</style>

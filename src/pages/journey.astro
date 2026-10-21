@@ -1,0 +1,270 @@
+---
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import DateLine from '../components/DateLine.astro';
+import { journeyStations, stationById, stations } from '../data/stations';
+import { eras } from '../data/taxonomy';
+import { images } from '../data/images';
+import { stationUrl, url } from '../lib/paths';
+
+const prologue = stationById.get('01')!;
+---
+
+<Base title="الرحلة القصيرة" description="جولة أولى في اثنتي عشرة محطة من تاريخ دراسة اللغة، مع إتاحة المحطات كلها للاستكشاف." current="journey/">
+  <header class="j-intro wrap">
+    <p class="eyebrow">الرحلة القصيرة</p>
+    <h1>اثنتا عشرة محطة لتجربة أولى</h1>
+    <p class="lede measure">
+      اختيار لجولة قصيرة، وليس ترتيباً للأهمية العلمية. المحطات الأربع عشرة الأخرى متاحة من البداية في <a href={url('timeline/')}>الخط الزمني الكامل</a>.
+    </p>
+    <ol class="j-index" aria-label="محطات الرحلة">
+      {journeyStations.map((s, i) => <li><a href={`#j-${s.id}`}><span>{i + 1}</span>{s.short}</a></li>)}
+    </ol>
+  </header>
+
+  <section class="prologue wrap" aria-labelledby="prologue-title">
+    <div class="prologue-text">
+      <p class="eyebrow">قبل البداية</p>
+      <h2 id="prologue-title">التفكير في اللغة أقدم من علمها الحديث</h2>
+      <p>{prologue.summary} ووجود هذا الوعي لا يساوي نظرية عامة للغة بالمعنى الحديث.</p>
+      <a class="more" href={stationUrl(prologue)}>المحطة {prologue.id}: {prologue.short}</a>
+    </div>
+  </section>
+
+  <ol class="stops">
+    {
+      journeyStations.map((s, i) => {
+        const era = eras.find((e) => e.id === s.era)!;
+        const imgId = s.image ?? s.portrait;
+        const img = imgId ? images[imgId] : undefined;
+        return (
+          <li class:list={['stop', { 'has-img': img, portrait: img?.kind === 'portrait', flip: i % 2 === 1 }]} id={`j-${s.id}`}>
+            <div class="wrap stop-grid">
+              <div class="stop-text">
+                <p class="stop-step">
+                  <span class="stop-i">{i + 1}</span>
+                  <span>من {journeyStations.length}</span>
+                  <span class="stop-era">{era.name}</span>
+                </p>
+                <h2>
+                  <span class="stop-num">{s.id}</span> {s.title}
+                </h2>
+                <DateLine dates={s.dates} />
+                <p class="stop-q">{s.question}</p>
+                <p class="stop-sum">{s.summary}</p>
+                <p class="stop-changed">
+                  <strong>ما الذي تغيّر؟</strong> {s.changed}
+                </p>
+                <a class="btn btn-small" href={stationUrl(s)} aria-label={`اكتشف المحطة ${s.id}: ${s.short}`}>
+                  اكتشف المحطة
+                </a>
+              </div>
+              {img && (
+                <figure class="stop-fig">
+                  <div class="frame">
+                    <Pic
+                      id={img.id}
+                      sizes={img.kind === 'portrait' ? '(min-width: 52rem) 22rem, 80vw' : '(min-width: 52rem) 40vw, 92vw'}
+                      ratio={img.kind === 'portrait' ? undefined : '4 / 3'}
+                    />
+                  </div>
+                  <figcaption>{img.caption}</figcaption>
+                </figure>
+              )}
+              {!img && (
+                <div class="stop-mark" aria-hidden="true">
+                  <span>{s.id}</span>
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  <section class="j-end band section">
+    <div class="wrap measure-center">
+      <h2>انتهت الجولة القصيرة</h2>
+      <p>
+        بقية المحطات تكمل الصورة:
+        {stations.filter((x) => !x.journey).map((x, i, arr) => (
+          <>
+            <a href={stationUrl(x)}>{x.short}</a>
+            {i < arr.length - 1 ? '، ' : '.'}
+          </>
+        ))}
+      </p>
+      <div class="end-actions">
+        <a class="btn" href={url('timeline/')}>كل المحطات</a>
+        <a class="btn btn-ghost" href={url('lab/')}>المختبر</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .j-intro {
+    padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+  }
+  .j-index {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .j-index a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.75rem 0.2rem 0.4rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 99px;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .j-index a span {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--prussian);
+    color: var(--paper);
+    font-size: 0.75rem;
+  }
+  .j-index a:hover {
+    border-color: var(--copper);
+  }
+  .prologue {
+    margin-block: 2rem;
+  }
+  .prologue-text {
+    max-width: 40rem;
+    padding: 1.4rem 1.6rem;
+    border: 1px solid var(--rule);
+    border-inline-start: 4px solid var(--amber);
+    background: var(--paper);
+  }
+  .prologue-text h2 {
+    font-size: var(--step-2);
+  }
+  .stops {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .stop {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    border-top: 1px solid var(--rule);
+    scroll-margin-top: 4rem;
+  }
+  .stop:nth-child(even) {
+    background: color-mix(in srgb, var(--paper) 55%, transparent);
+  }
+  .stop-grid {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (min-width: 52rem) {
+    .stop-grid {
+      grid-template-columns: 7fr 5fr;
+    }
+    .stop.portrait .stop-grid {
+      grid-template-columns: 8fr 4fr;
+    }
+    .stop.flip .stop-text {
+      order: 2;
+    }
+  }
+  .stop-step {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .stop-i {
+    font-size: 1.4rem;
+    color: var(--copper);
+  }
+  .stop-era {
+    margin-inline-start: 0.6rem;
+    padding-inline-start: 0.6rem;
+    border-inline-start: 1px solid var(--rule-strong);
+  }
+  .stop h2 {
+    font-size: var(--step-2);
+  }
+  .stop-num {
+    color: var(--copper);
+  }
+  .stop-q {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--prussian);
+    margin: 1rem 0 0.6rem;
+    line-height: 1.6;
+  }
+  .stop-sum {
+    max-width: 38rem;
+  }
+  .stop-changed {
+    max-width: 38rem;
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+    border-inline-start: 2px solid var(--copper-soft);
+    padding-inline-start: 0.8rem;
+  }
+  .stop-changed strong {
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--prussian-deep);
+  }
+  .stop-fig {
+    max-width: 34rem;
+  }
+  .stop.portrait .stop-fig {
+    max-width: 22rem;
+  }
+  .stop-mark {
+    display: none;
+  }
+  @media (min-width: 52rem) {
+    .stop-mark {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      max-width: 16rem;
+      border: 1px solid var(--rule-strong);
+      outline: 1px solid var(--rule);
+      outline-offset: 6px;
+      background:
+        radial-gradient(circle at center, color-mix(in srgb, var(--amber) 14%, transparent), transparent 70%);
+    }
+    .stop-mark span {
+      font-family: var(--font-display);
+      font-size: 6rem;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--copper);
+    }
+  }
+  .measure-center {
+    max-width: 44rem;
+    text-align: center;
+  }
+  .end-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

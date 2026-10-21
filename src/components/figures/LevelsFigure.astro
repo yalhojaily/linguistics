@@ -1,0 +1,71 @@
+---
+const levels = [
+  { n: '١', title: 'إنتاج جواب صحيح', text: 'هل يؤدي النظام المهمة المطلوبة على الأمثلة المعروضة؟' },
+  { n: '٢', title: 'التعميم على أمثلة جديدة', text: 'هل يستمر الأداء مع أمثلة لم يُبنَ عليها؟' },
+  { n: '٣', title: 'تفسير القدرة البشرية', text: 'هل يقدّم النجاح تفسيراً لكيفية اكتساب البشر للغة واستعمالهم لها؟' },
+];
+---
+
+<figure class="levels">
+  <ol>
+    {
+      levels.map((l) => (
+        <li>
+          <span class="lv-n" aria-hidden="true">{l.n}</span>
+          <div>
+            <p class="lv-title">{l.title}</p>
+            <p class="lv-text">{l.text}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+  <figcaption>
+    ثلاثة أسئلة مختلفة. النجاح في المستوى الأول لا يكفي وحده للإجابة عن الثالث؛ هذا موضع النقاش في المحطة، لا حكم نهائي فيه.
+  </figcaption>
+</figure>
+
+<style>
+  .levels ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .levels li {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 0.8rem;
+    align-items: start;
+    padding: 0.8rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .levels li:nth-child(2) {
+    margin-inline-start: clamp(0rem, 4vw, 2rem);
+  }
+  .levels li:nth-child(3) {
+    margin-inline-start: clamp(0rem, 8vw, 4rem);
+    border-style: dashed;
+    border-color: var(--copper-soft);
+  }
+  .lv-n {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--copper);
+    text-align: center;
+    padding-top: 0.3rem;
+  }
+  .lv-title {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+    margin: 0;
+  }
+  .lv-text {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+</style>

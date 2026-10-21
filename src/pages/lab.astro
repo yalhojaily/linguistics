@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import IrabLab from '../components/labs/IrabLab.astro';
+import DeixisLab from '../components/labs/DeixisLab.astro';
+import CorpusLab from '../components/labs/CorpusLab.astro';
+import { stationById } from '../data/stations';
+import { stationUrl } from '../lib/paths';
+
+const labs = [
+  { st: stationById.get('05')!, C: IrabLab },
+  { st: stationById.get('19')!, C: DeixisLab },
+  { st: stationById.get('23')!, C: CorpusLab },
+];
+---
+
+<Base title="المختبر" description="ثلاثة أنشطة تعليمية صغيرة تعمل في المتصفح: تبديل الإعراب، و«أنا هنا الآن»، ومدونة تعليمية." current="lab/">
+  <header class="wrap l-intro">
+    <p class="eyebrow">المختبر</p>
+    <h1>ثلاث تجارب صغيرة</h1>
+    <p class="lede measure">
+      تعمل الأنشطة في متصفحك دون اتصال بأي خدمة. بياناتها مؤلفة ومعلنة؛ هدفها توضيح فكرة، لا تقديم نتيجة بحثية.
+    </p>
+  </header>
+  <div class="wrap l-list">
+    {
+      labs.map(({ st, C }) => (
+        <div class="l-item">
+          <p class="l-from">
+            من <a href={stationUrl(st)}>المحطة {st.id}: {st.short}</a>
+          </p>
+          <C headingLevel="h2" />
+        </div>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .l-intro {
+    padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+  }
+  .l-list {
+    display: grid;
+    gap: 3.5rem;
+    padding-bottom: 5rem;
+    max-width: 58rem;
+  }
+  .l-from {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+</style>
