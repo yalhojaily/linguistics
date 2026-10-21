@@ -1,0 +1,83 @@
+# كيف فهمنا اللغة؟ — رحلة في تاريخ اللسانيات
+
+موقع عربي ثابت عن تاريخ دراسة اللغة: 26 محطة، خط زمني قابل للتصفية، صفحة لكل محطة، أعلام، معجم مصطلحات، مصادر مشروحة، وثلاثة أنشطة تعليمية تعمل في المتصفح.
+
+الموقع المنشور: <https://yalhojaily.github.io/linguistics/>
+
+## التقنية
+
+- **Astro 7 + TypeScript**: يولّد صفحات HTML ثابتة، ولا يرسل إطار واجهة إلى المتصفح. الجافاسكربت الوحيد سكربتات صغيرة للمرشحات والأنشطة.
+- **الخطوط** مستضافة محلياً عبر Fontsource (رخصة SIL OFL): «ريم كوفي» للعناوين، و«نوتو نسخ عربي» للنص.
+- **الصور** تُحسَّن وقت البناء (AVIF/WebP/JPEG بعدة أحجام) عبر `astro:assets`.
+
+## التشغيل والبناء
+
+```bash
+npm ci               # تثبيت الاعتماديات
+npm run dev          # خادم تطوير: http://localhost:4321/linguistics/
+npm run build        # بناء الموقع في dist/
+npm run preview      # معاينة الناتج تحت مسار النشر /linguistics/
+npm run check        # فحص الأنواع ثم فحص الناتج (يتطلب build أولاً)
+```
+
+يتطلب Node 22 أو أحدث.
+
+## النشر
+
+يُنشر الموقع تلقائياً عند كل دفع إلى `main` عبر `.github/workflows/deploy.yml` (مصدر Pages: **GitHub Actions**). يبني السير الموقع، ويتحقق من وجود 26 محطة و38 مرجعاً، ثم ينشر.
+
+المسار الأساسي `/linguistics/` مضبوط في `astro.config.mjs`. إن أُضيف نطاق مخصص: غيّر `site` إلى النطاق واحذف `base`.
+
+## بنية المشروع
+
+```
+content-source/linguistics-timeline.md   المادة المرجعية الأصلية (للقراءة فقط)
+originals/                               الصور الأصلية كما أُنشئت
+src/assets/images/                       نسخ الصور بأسماء تقنية ثابتة
+src/data/                                المحتوى منفصلاً عن الواجهة
+  stations.ts   المحطات الـ26          sources.ts   المراجع الـ38
+  people.ts     الأعلام الستة          glossary.ts  المعجم
+  taxonomy.ts   الحقب والمسارات         images.ts    الصور ونصوصها البديلة وتعليقاتها
+  corpus.ts     نصوص المدونة التعليمية (مؤلفة ومعلنة)
+src/components/   مكونات الواجهة والأنشطة (labs/)
+src/pages/        الصفحات؛ stations/[slug].astro تولّد صفحة لكل محطة
+scripts/validate-data.mjs   فحص الناتج بعد البناء
+```
+
+## إضافة محطة
+
+1. أضف كائناً جديداً إلى مصفوفة `stations` في `src/data/stations.ts` وفق الواجهة `Station` في `src/data/types.ts` (الرقم، `slug` فريد، الحقبة، المسارات، نوع التحول، التواريخ مع نوع كل تاريخ، السؤال، الشرح، الحدود، المصادر، المحطات ذات الصلة، وموضعها في الرسم `chart`).
+2. أضف مراجعها الجديدة، إن وُجدت، إلى `src/data/sources.ts`.
+3. حدّث العدد المتوقع في `scripts/validate-data.mjs`.
+4. شغّل `npm run build && npm run check`.
+
+تُنشأ صفحة المحطة وبطاقتها في الخط الزمني تلقائياً.
+
+## إضافة صورة
+
+1. احفظ الأصل في `originals/` دون تعديل.
+2. صدّر نسخة JPEG بعرض لا يتجاوز 1536px إلى `src/assets/images/` باسم تقني ثابت، مثل `13-topic-name.jpg`.
+3. أضف معرّفها إلى `ImageId` في `src/data/types.ts`، ثم سجلها في `src/data/images.ts` مع: العنوان الأصلي، اسم الملف الأصلي، نص بديل عربي يصف الصورة دون ادعاء تاريخي، تعليق مرئي يوضح طبيعتها، وموضع التركيز للقص (`focus`).
+4. اربطها بمحطة عبر `image` أو `portrait` أو `sharedImage`.
+5. أضف صفاً إلى الجدول أدناه.
+
+## جدول الصور
+
+طوبقت الصور مع عناوينها بالفحص البصري، ثم بمقارنة بصمة الملفات (MD5) مع المرفقات الأصلية.
+
+| العنوان | الملف الأصلي (`originals/`) | النسخة المستخدمة (`src/assets/images/`) | مواضع الاستخدام |
+|---|---|---|---|
+| 01 — بدايات دراسة اللغة | `The_Scribe_s_Clay_Archive-1.png` | `01-beginnings-scribe.jpg` | الصورة الافتتاحية للرئيسية؛ المحطة 01 |
+| 02 — التراث اللغوي العربي | `A_Medieval_Scholar_Compares_Manuscripts-2.png` | `02-arabic-tradition-library.jpg` | بطاقة المسار العربي في الرئيسية؛ صورة المحطة 05 |
+| 03 — مقارنة اللغات | `Philologist_beneath_a_branching_tree-3.png` | `03-comparison-tree.jpg` | مسار التاريخ والمقارنة؛ المحطة 08؛ مصغرة في المحطة 09 |
+| 04 — البنية والقواعد | `Branching_Forms_Above_an_Open_Book-4.png` | `04-structure-forms.jpg` | مسار وصف اللغة وبناء القواعد؛ المحطة 12 |
+| 05 — اللغة في المجتمع | `Language_in_the_Courtyard-5.png` | `05-society-courtyard.jpg` | مسار الإنسان والمجتمع؛ المحطة 17 |
+| 06 — المدونات والحوسبة | `From_Archives_to_Algorithms-6.png` | `06-corpora-computing.jpg` | مسار البيانات والحوسبة؛ المحطة 23؛ مصغرة في 24 و26 |
+| 07 — بانيني، بورتريه تخيّلي | `Imagined_Panini_with_Palm-Leaf_Manuscripts-7.png` | `07-portrait-panini.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 02 |
+| 08 — سيبويه، بورتريه تخيّلي | `Sibawayh__Scholar_of_Arabic_Linguistics-8.png` | `08-portrait-sibawayh.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 05 |
+| 09 — عبد القاهر الجرجاني، بورتريه تخيّلي | `Abd_al-Qahir_al-Jurjani_Scholar_of_Rhetoric-9.png` | `09-portrait-jurjani.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 06 |
+| 10 — فرديناند دي سوسير | `Ferdinand_de_Saussure_in_sepia-10.png` | `10-portrait-saussure.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 12 |
+| 11 — نعوم تشومسكي | `Noam_Chomsky_in_Ink_and_Watercolor-11.png` | `11-portrait-chomsky.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 14 |
+| 12 — وليام لابوف | `William_Labov_linguistics_scholar-12.png` | `12-portrait-labov.jpg` | بطاقة الأعلام؛ صفحة الأعلام؛ المحطة 17 |
+
+كل الصور أعمال فنية مولّدة، ويرافق كل صورة في الموقع تعليق يوضح ذلك.

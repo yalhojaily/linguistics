@@ -1,0 +1,46 @@
+# بناء الموقع ونشره على GitHub Pages (المصدر: GitHub Actions).
+# مبني على المثال الرسمي في وثائق Astro:
+# https://docs.astro.build/en/guides/deploy/github/
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# أقل صلاحيات لازمة: قراءة المستودع، والكتابة إلى Pages، ورمز OIDC للنشر.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# نشر واحد في كل مرة؛ لا يُلغى نشر جارٍ.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install, build and upload
+        uses: withastro/action@v6
+        with:
+          node-version: 22
+
+      - name: Validate built content (26 stations, 38 sources)
+        run: node scripts/validate-data.mjs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
