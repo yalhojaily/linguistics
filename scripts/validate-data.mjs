@@ -24,18 +24,22 @@ ok(items.length === 26, `الخط الزمني يعرض ${items.length} محطة
 
 const sourcesHtml = existsSync(join(dist, 'sources/index.html')) ? readFileSync(join(dist, 'sources/index.html'), 'utf8') : '';
 const srcIds = new Set([...sourcesHtml.matchAll(/id="src-(s\d+)"/g)].map((m) => m[1]));
-ok(srcIds.size === 38, `صفحة المصادر تضم ${srcIds.size} مرجعاً بدلاً من 38.`);
+const EXPECTED_SOURCES = 103; // 38 من المادة الأصلية + 65 مصدر إثراء (م39–م103)
+ok(srcIds.size === EXPECTED_SOURCES, `صفحة المصادر تضم ${srcIds.size} مرجعاً بدلاً من ${EXPECTED_SOURCES}.`);
 
 for (const slug of slugs) {
   const html = readFileSync(join(stationsDir, slug, 'index.html'), 'utf8');
-  for (const sec of ['question', 'idea', 'changed', 'limits', 'sources', 'related']) {
+  for (const sec of ['question', 'idea', 'changed', 'deep', 'chronology', 'concepts', 'limits', 'sources', 'related']) {
     ok(html.includes(`id="${sec}"`), `${slug}: القسم ${sec} مفقود.`);
   }
   ok(/class="src"/.test(html), `${slug}: لا توجد مصادر.`);
+  // كل إحالة داخل الصفحة إلى مصدر يجب أن يقابلها مصدر مدرج في قائمة المحطة.
+  const listed = new Set([...html.matchAll(/id="src-(s\d+)"/g)].map((m) => m[1]));
+  for (const m of html.matchAll(/href="#src-(s\d+)"/g)) ok(listed.has(m[1]), `${slug}: إحالة إلى ${m[1]} غير مدرجة في مصادر المحطة.`);
 }
 
 if (errors.length) {
   console.error('فشل الفحص:\n- ' + errors.join('\n- '));
   process.exit(1);
 }
-console.log(`فحص البيانات ناجح: ${slugs.length} محطة، ${srcIds.size} مرجعاً.`);
+console.log(`فحص البيانات ناجح: ${slugs.length} محطة، ${srcIds.size} مرجعاً، وكل إحالات المحطات مدرجة.`);

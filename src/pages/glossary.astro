@@ -10,7 +10,7 @@ import { stationUrl } from '../lib/paths';
     <p class="eyebrow">معجم تمهيدي</p>
     <h1>معجم المصطلحات</h1>
     <p class="lede measure">
-      التعريفات مبسطة للقارئ غير المتخصص؛ وتقدم المصادر المشار إليها في كل محطة التفاصيل والاختلافات النظرية.
+      التعريفات مبسطة للقارئ غير المتخصص؛ وتقدم المصادر المشار إليها في كل محطة التفاصيل والاختلافات النظرية. يبدأ المعجم بالمصطلحات التمهيدية من المادة المرجعية، ثم مفاهيم المحطات الموسعة، وكل مصطلح مرتبط بمحطاته.
     </p>
   </header>
 
@@ -31,7 +31,7 @@ import { stationUrl } from '../lib/paths';
           <div class="term" id={`term-${t.id}`} data-text={`${t.ar} ${t.en} ${t.def}`}>
             <dt>
               <span class="t-ar">{t.ar}</span>
-              <span class="t-en" dir="ltr" lang="en">{t.en}</span>
+              {t.en && <span class="t-en" dir="ltr" lang="en">{t.en}</span>}
             </dt>
             <dd>
               <p>{t.def}</p>

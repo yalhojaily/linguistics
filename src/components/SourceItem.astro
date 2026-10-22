@@ -2,19 +2,21 @@
 import { sourceKinds, type Source } from '../data/sources';
 import { stations } from '../data/stations';
 import { stationUrl } from '../lib/paths';
+import { allSourceIds } from '../lib/stationSources';
 
 interface Props {
   source: Source;
   showStations?: boolean;
 }
 const { source: s, showStations = false } = Astro.props;
-const cited = stations.filter((st) => st.sources.includes(s.id));
+const cited = stations.filter((st) => allSourceIds(st).includes(s.id));
+const isArabic = /[\u0600-\u06FF]/.test(s.citation);
 ---
 
 <li class="src" id={`src-${s.id}`}>
   <span class="src-label">{s.label}</span>
   <div class="src-body">
-    <p class="src-cite" dir="ltr" lang="en">{s.citation}</p>
+    <p class="src-cite" dir={isArabic ? 'rtl' : 'ltr'} lang={isArabic ? 'ar' : 'en'}>{s.citation}</p>
     <p class="src-meta">
       <span class="src-kind">{sourceKinds[s.kind]}</span>
       <a href={s.url} rel="noopener" target="_blank">{s.linkLabel}<span class="visually-hidden"> (يفتح في نافذة جديدة)</span></a>

@@ -5,11 +5,15 @@ import { sources, sourceGroups, sourceById, type SourceGroup } from '../data/sou
 import { stations } from '../data/stations';
 import { site } from '../data/editorial';
 import { stationUrl } from '../lib/paths';
+import { enrichmentSourceIds } from '../lib/stationSources';
+
+const addedCount = sources.filter((x) => x.added).length;
+const baseCount = sources.length - addedCount;
 
 const groups = Object.keys(sourceGroups) as SourceGroup[];
 ---
 
-<Base title="المصادر" description="المراجع الثمانية والثلاثون للموقع، مع نوع كل مرجع وما يدعمه وما استُخدم منه، وربطها بالمحطات." current="sources/">
+<Base title="المصادر" description={`${sources.length} مرجعاً للموقع، مع نوع كل مرجع وما يدعمه وما استُخدم منه، وربطها بالمحطات.`} current="sources/">
   <header class="wrap s-intro">
     <p class="eyebrow">المصادر</p>
     <h1>المراجع المشروحة</h1>
@@ -17,6 +21,9 @@ const groups = Object.keys(sourceGroups) as SourceGroup[];
       لكل مرجع نوعه، وما يدعمه في الموقع، وما استُخدم منه فعلاً. استُخدمت النصوص المفتوحة والمقتطفات والملخصات الأكاديمية المتاحة وصفحات بيانات النشر، ولم تُفترض قراءة الكتب المدفوعة كاملة؛ لذلك لا توجد اقتباسات حرفية طويلة ولا إحالات إلى صفحات داخلية لم تُفحص.
     </p>
     <p class="s-date">أُعدّت المادة وتُحقق من روابطها في {site.preparedOn}.</p>
+    <p class="lede measure">
+      المراجع م01–م{String(baseCount).padStart(2, '0')} من المادة المرجعية الأصلية. والمراجع م{baseCount + 1}–م{sources.length} ({addedCount} مرجعاً) أضيفت في مراجعة 22 أكتوبر 2026 لطبقة «تعمّق» في المحطات، وفُتح كل منها وتُحقق من الوقائع المنسوبة إليه. منها نصوص أولية عربية تُقتبس منها جمل قصيرة مع الجزء والصفحة.
+    </p>
   </header>
 
   <section class="wrap s-index" aria-labelledby="idx-title">
@@ -24,7 +31,7 @@ const groups = Object.keys(sourceGroups) as SourceGroup[];
     <div class="idx-scroll">
       <table>
         <thead>
-          <tr><th scope="col">المحطة</th><th scope="col">المراجع</th></tr>
+          <tr><th scope="col">المحطة</th><th scope="col">مراجع المادة الأصلية</th><th scope="col">مراجع «تعمّق»</th></tr>
         </thead>
         <tbody>
           {
@@ -33,6 +40,14 @@ const groups = Object.keys(sourceGroups) as SourceGroup[];
                 <th scope="row"><a href={stationUrl(s, 'sources')}>{s.id} · {s.short}</a></th>
                 <td>
                   {s.sources.map((id, i) => (
+                    <>
+                      {i > 0 && ' · '}
+                      <a href={`#src-${id}`}>{sourceById.get(id)!.label}</a>
+                    </>
+                  ))}
+                </td>
+                <td>
+                  {enrichmentSourceIds(s).filter((id) => !s.sources.includes(id)).map((id, i) => (
                     <>
                       {i > 0 && ' · '}
                       <a href={`#src-${id}`}>{sourceById.get(id)!.label}</a>

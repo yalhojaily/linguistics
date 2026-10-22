@@ -11,6 +11,10 @@ import LevelsFigure from '../../components/figures/LevelsFigure.astro';
 import { stations, stationById, journeyStations } from '../../data/stations';
 import { eras, tracks, shifts, relations } from '../../data/taxonomy';
 import { sourceById } from '../../data/sources';
+import { enrichment } from '../../data/enrichment';
+import { dateKinds } from '../../data/taxonomy';
+import KindMark from '../../components/KindMark.astro';
+import { allSourceIds } from '../../lib/stationSources';
 import { images } from '../../data/images';
 import type { Station } from '../../data/types';
 import { stationUrl, url } from '../../lib/paths';
@@ -30,18 +34,24 @@ const next = stations[idx + 1];
 const jIdx = journeyStations.indexOf(s);
 const jNext = jIdx >= 0 ? journeyStations[jIdx + 1] : undefined;
 const stTracks = s.tracks.map((t) => tracks.find((x) => x.id === t)!);
-const srcs = s.sources.map((id) => sourceById.get(id)!);
+const en = enrichment[s.id];
+const srcs = allSourceIds(s).map((id) => sourceById.get(id)!);
+const baseCount = s.sources.length;
+const srcLabel = (id: string) => sourceById.get(id as `s${string}`)!.label;
 const related = s.related.map((r) => ({ ...r, st: stationById.get(r.id)! }));
 const portrait = s.portrait ? images[s.portrait] : undefined;
 const hero = s.image ? images[s.image] : undefined;
 const shared = s.sharedImage ? { img: images[s.sharedImage.image], with: stationById.get(s.sharedImage.with)! } : undefined;
 const hasExample = Boolean(s.example || s.lab || s.figure || s.reflect);
-const hasPeople = Boolean(s.people?.length || s.works?.length);
+const hasPeople = Boolean(s.people?.length || s.works?.length || en?.readings?.length);
 
 const toc = [
   { id: 'question', label: 'السؤال المركزي' },
   { id: 'idea', label: 'الفكرة' },
   { id: 'changed', label: 'ما الذي تغيّر؟' },
+  ...(en ? [{ id: 'deep', label: 'تعمّق' }] : []),
+  ...(en?.milestones?.length ? [{ id: 'chronology', label: 'وقائع مؤرخة' }] : []),
+  ...(en?.concepts?.length ? [{ id: 'concepts', label: 'مفاهيم أساسية' }] : []),
   ...(hasPeople ? [{ id: 'people', label: 'الأعلام والأعمال' }] : []),
   ...(hasExample ? [{ id: 'example', label: s.lab ? 'مثال وتجربة' : s.example ? 'مثال تعليمي' : 'للتأمل' }] : []),
   { id: 'limits', label: 'حدود الفكرة' },
@@ -116,6 +126,81 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
           <p>{s.changed}</p>
         </section>
 
+
+        {
+          en && (
+            <section id="deep" class="st-sec st-deep">
+              <h2>تعمّق</h2>
+              <p class="deep-intro">شرح موسّع في {en.deep.length} أقسام. افتح ما يهمك؛ تحت كل قسم مصادره.</p>
+              {en.deep.map((d, i) => (
+                <details class="deep" open={i === 0}>
+                  <summary>
+                    <span class="deep-n">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="deep-h">{d.heading}</span>
+                  </summary>
+                  <div class="deep-body">
+                    {d.paras.map((p) => <p>{p}</p>)}
+                    <p class="deep-src">
+                      <span>المصادر:</span>
+                      {d.sources.map((id) => (
+                        <a class="src-ref" href={`#src-${id}`} data-src={id}>{srcLabel(id)}</a>
+                      ))}
+                    </p>
+                  </div>
+                </details>
+              ))}
+            </section>
+          )
+        }
+
+        {
+          en?.milestones && en.milestones.length > 0 && (
+            <section id="chronology" class="st-sec">
+              <h2>وقائع مؤرخة</h2>
+              <ol class="chrono">
+                {en.milestones.map((m) => (
+                  <li>
+                    <span class="c-when">{m.when}</span>
+                    <span class="c-what">{m.what}</span>
+                    <span class="c-meta">
+                      <KindMark kind={m.kind} />
+                      {dateKinds[m.kind].name}
+                      {m.approx && ' · تقريبي'}
+                      {' · '}
+                      {m.sources.map((id, j) => (
+                        <>
+                          {j > 0 && ' '}
+                          <a class="src-ref" href={`#src-${id}`} data-src={id}>{srcLabel(id)}</a>
+                        </>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+
+        {
+          en?.concepts && en.concepts.length > 0 && (
+            <section id="concepts" class="st-sec">
+              <h2>مفاهيم أساسية</h2>
+              <dl class="concepts">
+                {en.concepts.map((c) => (
+                  <div>
+                    <dt>
+                      {c.term}
+                      {c.latin && <span class="latin" dir="ltr" lang="en">{c.latin}</span>}
+                    </dt>
+                    <dd>{c.def}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p class="concepts-more"><a href={url('glossary/')}>كل المصطلحات في المعجم</a></p>
+            </section>
+          )
+        }
+
         {
           hasPeople && (
             <section id="people" class:list={['st-sec', 'st-people', { 'has-portrait': portrait }]}>
@@ -154,6 +239,21 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
                             {(w.year || w.by) && (
                               <span class="w-meta">{[w.by, w.year].filter(Boolean).join('، ')}</span>
                             )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {en?.readings && en.readings.length > 0 && (
+                    <>
+                      <h3>نصوص تأسيسية للرجوع إليها</h3>
+                      <ul class="works">
+                        {en.readings.map((w) => (
+                          <li>
+                            «{w.title}»
+                            {w.latin && <span class="latin" dir="ltr" lang="en">{w.latin}</span>}
+                            {(w.by || w.year) && <span class="w-meta">{[w.by, w.year].filter(Boolean).join('، ')}</span>}
+                            {w.note && <span class="w-meta">{w.note}</span>}
                           </li>
                         ))}
                       </ul>
@@ -220,7 +320,7 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
 
         <section id="sources" class="st-sec">
           <h2>المصادر</h2>
-          <details class="src-details">
+          <details class="src-details" id="src-details">
             <summary>
               <span class="src-count">{srcs.length === 1 ? 'مصدر واحد' : `${srcs.length} مصادر`}</span>
               <span class="src-chips">{srcs.map((x) => x.label).join(' · ')}</span>
@@ -229,6 +329,11 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
             <ol class="src-list">
               {srcs.map((x) => <SourceItem source={x} />)}
             </ol>
+            {srcs.length > baseCount && (
+              <p class="src-added-note">
+                المصادر الموسومة «إثراء» أضيفت في مراجعة لاحقة لتوسيع المحطة، وفُحصت الوقائع المنسوبة إليها مقابل نصوصها.
+              </p>
+            )}
           </details>
           <p class="src-all"><a href={url('sources/')}>كل المصادر ووظيفة كل منها</a></p>
         </section>
@@ -288,6 +393,31 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
     </nav>
   </article>
 </Base>
+
+<script>
+  // روابط المصادر داخل الصفحة: افتح قائمة التوثيق المطوية ثم انتقل إلى المصدر.
+  document.querySelectorAll<HTMLAnchorElement>('a.src-ref').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      const target = document.getElementById(`src-${a.dataset.src}`);
+      const box = document.getElementById('src-details') as HTMLDetailsElement | null;
+      if (!target || !box) return;
+      e.preventDefault();
+      box.open = true;
+      target.scrollIntoView({ block: 'center' });
+      target.classList.add('is-flash');
+      target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+      history.replaceState(null, '', `#src-${a.dataset.src}`);
+      setTimeout(() => target.classList.remove('is-flash'), 1600);
+    });
+  });
+  // فتح القائمة عند الوصول برابط مباشر إلى مصدر.
+  if (location.hash.startsWith('#src-')) {
+    const box = document.getElementById('src-details') as HTMLDetailsElement | null;
+    if (box) box.open = true;
+    document.querySelector(location.hash)?.scrollIntoView({ block: 'center' });
+  }
+</script>
 
 <style>
   .st-head {
@@ -778,6 +908,170 @@ const exampleHeading = s.lab ? 'مثال وتجربة' : s.example ? 'مثال �
   }
   .pg-next .pg-t::after {
     content: ' ←';
+  }
+
+  .deep-intro {
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+    margin-bottom: 1rem;
+  }
+  .deep {
+    border-top: 1px solid var(--rule);
+  }
+  .deep:last-of-type {
+    border-bottom: 1px solid var(--rule);
+  }
+  .deep summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    padding-block: 0.95rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .deep summary::-webkit-details-marker {
+    display: none;
+  }
+  .deep summary::after {
+    content: '+';
+    margin-inline-start: auto;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--copper);
+  }
+  .deep[open] summary::after {
+    content: '−';
+  }
+  .deep-n {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--copper);
+    font-variant-numeric: tabular-nums;
+  }
+  .deep-h {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--prussian-deep);
+    line-height: 1.45;
+  }
+  .deep summary:hover .deep-h {
+    color: var(--copper);
+  }
+  .deep-body {
+    padding-bottom: 1.1rem;
+    padding-inline-start: 1.8rem;
+  }
+  .deep-body p {
+    line-height: 1.95;
+  }
+  .deep-src {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin-top: 0.4rem;
+  }
+  .src-ref {
+    color: var(--copper);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--copper-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .src-ref:hover {
+    border-bottom-style: solid;
+  }
+  .chrono {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-inline-start: 2px solid var(--rule-strong);
+  }
+  .chrono li {
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.2rem 1.2rem 1.1rem;
+  }
+  .chrono li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: -0.42rem;
+    top: 0.65rem;
+    width: 0.7rem;
+    height: 0.7rem;
+    background: var(--paper);
+    border: 2px solid var(--copper);
+    border-radius: 50%;
+  }
+  .c-when {
+    font-family: var(--font-display);
+    color: var(--prussian);
+    font-size: 1.05rem;
+  }
+  .c-what {
+    line-height: 1.75;
+  }
+  .c-meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .concepts {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+  }
+  @media (min-width: 40rem) {
+    .concepts {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .concepts > div {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-inline-start: 3px solid var(--prussian);
+    padding: 0.8rem 1rem;
+  }
+  .concepts dt {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+    font-size: 1.05rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.6rem;
+  }
+  .concepts dt .latin {
+    font-family: var(--font-latin);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .concepts dd {
+    margin: 0.3rem 0 0;
+    line-height: 1.75;
+    font-size: 0.98rem;
+  }
+  .concepts-more {
+    margin-top: 0.9rem;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+  }
+  .src-added-note {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    margin-top: 0.8rem;
+  }
+  :global(.src.is-flash) {
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
+    transition: background 0.4s;
   }
 </style>
 

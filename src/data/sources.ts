@@ -1,4 +1,5 @@
 import type { SourceId } from './types';
+import { addedSources } from './sources-added';
 
 export type SourceKind =
   | 'reference-book'
@@ -8,7 +9,10 @@ export type SourceKind =
   | 'institutional'
   | 'primary'
   | 'publisher'
-  | 'excerpt';
+  | 'excerpt'
+  | 'database'
+  | 'course'
+  | 'article';
 
 export const sourceKinds: Record<SourceKind, string> = {
   'reference-book': 'كتاب مرجعي',
@@ -19,6 +23,9 @@ export const sourceKinds: Record<SourceKind, string> = {
   primary: 'مصدر أولي',
   publisher: 'صفحة ناشر',
   excerpt: 'مقتطف أو وصف رسمي',
+  database: 'قاعدة بيانات علمية',
+  course: 'مادة جامعية',
+  article: 'مقالة تاريخية أو مرجعية',
 };
 
 export type SourceGroup = 'general' | 'traditions' | 'modern' | 'society' | 'data';
@@ -47,11 +54,13 @@ export interface Source {
   /** ما استُخدم منه فعلاً، حتى لا يُوحى بقراءة كاملة. */
   used: string;
   extra?: { label: string; url: string; note?: string }[];
+  /** تاريخ إضافة المصدر إن أضيف في مراجعة لاحقة للمادة الأصلية. */
+  added?: string;
 }
 
 const CHL = 'In: Waugh, Monville-Burston & Joseph (eds.), The Cambridge History of Linguistics. Cambridge University Press, 2023';
 
-export const sources: Source[] = [
+const baseSources: Source[] = [
   {
     id: 's01',
     label: 'م01',
@@ -137,7 +146,7 @@ export const sources: Source[] = [
     label: 'م08',
     group: 'traditions',
     kind: 'chapter',
-    citation: `"The Arabic Linguistic Tradition." 2023. ${CHL}, pp. 195–212.`,
+    citation: `Versteegh, Kees. 2023. "The Arabic Linguistic Tradition." ${CHL}, pp. 195–212.`,
     linkLabel: 'صفحة الفصل',
     url: 'https://www.cambridge.org/core/books/abs/cambridge-history-of-linguistics/arabic-linguistic-tradition/0673036D0233A43ADBB0F8772C81C4AE',
     supports: 'موقع سيبويه، وطبيعة التحليل، وأثر النموذج العربي في أوصاف لغات أخرى.',
@@ -504,5 +513,8 @@ export const sources: Source[] = [
     used: 'الورقة.',
   },
 ];
+
+/** المراجع الأصلية (م01–م38) ثم مصادر الإثراء المضافة لاحقاً. */
+export const sources: Source[] = [...baseSources, ...addedSources];
 
 export const sourceById = new Map(sources.map((s) => [s.id, s]));

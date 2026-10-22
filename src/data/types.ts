@@ -89,6 +89,46 @@ export interface ChartSpan {
 
 export type Relation = 'near' | 'before';
 
+/** قسم تعمّق: شرح مفصل موثق، كل فقرة فيه مسنودة بالمصادر المذكورة. */
+export interface DeepSection {
+  heading: string;
+  paras: string[];
+  sources: SourceId[];
+}
+
+/** واقعة مؤرخة دقيقة داخل المحطة، بمصدرها. */
+export interface Milestone {
+  when: string;
+  what: string;
+  kind: DateKind;
+  /** التاريخ تقريبي أو مختلف عليه. */
+  approx?: boolean;
+  sources: SourceId[];
+}
+
+export interface Concept {
+  term: string;
+  latin?: string;
+  def: string;
+}
+
+/** نص تأسيسي يُنصح بالرجوع إليه (لا يعني أن الموقع اعتمد على قراءته كاملاً). */
+export interface Reading {
+  title: string;
+  latin?: string;
+  by?: string;
+  year?: string;
+  note?: string;
+}
+
+/** طبقة الإثراء لكل محطة، منفصلة عن الطبقة الأساسية المأخوذة من المادة المرجعية. */
+export interface Enrichment {
+  deep: DeepSection[];
+  milestones?: Milestone[];
+  concepts?: Concept[];
+  readings?: Reading[];
+}
+
 export interface Station {
   num: number;
   /** رقم من خانتين: "05" */
