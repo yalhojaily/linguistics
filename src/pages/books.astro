@@ -1,0 +1,450 @@
+---
+import Base from '../layouts/Base.astro';
+import { books, stages, freeBasisLabel, langLabel } from '../data/books';
+import { stationById } from '../data/stations';
+import { stationUrl } from '../lib/paths';
+
+const byStage = stages.map((st) => ({ st, list: books.filter((b) => b.stage === st.id) }));
+const freeCount = books.filter((b) => b.free).length;
+const arCount = books.filter((b) => b.lang === 'ar').length;
+let n = 0;
+---
+
+<Base
+  title="كتب اللسانيات"
+  description="مسار قراءة متدرج في اللسانيات وتاريخها، من المدخل إلى المراجع المتقدمة، مع روابط قانونية للكتب المتاحة مجاناً."
+  current="books/"
+>
+  <header class="wrap b-intro">
+    <p class="eyebrow">مكتبة الدارس</p>
+    <h1>كتب اللسانيات</h1>
+    <p class="lede measure">
+      مسار قراءة مقترح في {stages.length} مراحل، من كتب لا تحتاج خلفية سابقة إلى المراجع التي يرجع إليها الباحث. يضم {books.length} كتاباً، منها {arCount} بالعربية،
+      و{freeCount} متاحة مجاناً بروابط قانونية.
+    </p>
+    <ul class="b-rules measure">
+      <li>القائمة اختيار تحريري لا حصر. ركّزنا على ما يخدم موضوع الموقع: اللسانيات العامة وتاريخها، والتراث العربي، والمحطات الست والعشرين.</li>
+      <li>لا نضع رابطاً مجانياً إلا إذا كان الكتاب في الملكية العامة، أو منشوراً بوصول مفتوح، أو يتيحه مؤلفوه أنفسهم. الكتب الأخرى تجدها في المكتبات الجامعية ولدى ناشريها. وقد تختلف حالة الملكية العامة من بلد إلى آخر؛ مشروع غوتنبرغ مثلاً يصف كتبه بأنها في الملكية العامة في الولايات المتحدة.</li>
+      <li>تحققنا من بيانات النشر في سجلات المكتبات وصفحات الناشرين. السنة المذكورة سنة الطبعة الأولى أو الطبعة المقترحة كما يوضح كل سطر.</li>
+    </ul>
+  </header>
+
+  <nav class="wrap b-path no-print" aria-label="مراحل القراءة">
+    <ol>
+      {
+        stages.map((st) => (
+          <li>
+            <a href={`#stage-${st.id}`}>
+              <span class="bp-n">{st.n}</span>
+              <span class="bp-name">{st.name}</span>
+              <span class="bp-when">{st.when}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+
+  <form class="wrap b-tools no-print" aria-label="تصفية الكتب" onsubmit="return false">
+    <fieldset>
+      <legend>اللغة</legend>
+      <label class="pill"><input type="radio" name="b-lang" value="" checked /> الكل</label>
+      <label class="pill"><input type="radio" name="b-lang" value="ar" /> بالعربية</label>
+      <label class="pill"><input type="radio" name="b-lang" value="en" /> بالإنجليزية</label>
+      <label class="pill"><input type="radio" name="b-lang" value="other" /> بلغات أخرى</label>
+    </fieldset>
+    <label class="pill b-free-toggle"><input type="checkbox" id="b-free" /> المتاح مجاناً فقط</label>
+    <p class="b-count" id="b-count" aria-live="polite">تُعرض {books.length} من {books.length} كتاباً.</p>
+  </form>
+
+  <div class="wrap b-stages">
+    <p class="b-empty" id="b-empty" hidden>
+      لا توجد كتب تطابق هذا الاختيار. <button type="button" class="linklike" id="b-reset">اعرض كل الكتب</button>
+    </p>
+    {
+      byStage.map(({ st, list }) => (
+        <section class="b-stage" id={`stage-${st.id}`} aria-labelledby={`stage-h-${st.id}`}>
+          <header class="bs-head">
+            <p class="bs-n" aria-hidden="true">{String(st.n).padStart(2, '0')}</p>
+            <div>
+              <p class="eyebrow">المرحلة {st.n} · {st.when}</p>
+              <h2 id={`stage-h-${st.id}`}>{st.name}</h2>
+              <p class="bs-lead">{st.lead}</p>
+            </div>
+          </header>
+          <ol class="b-list">
+            {list.map((b) => {
+              n += 1;
+              const isLatin = b.lang !== 'ar';
+              return (
+                <li class="book" id={`book-${b.id}`} data-lang={b.lang} data-free={b.free ? '1' : '0'}>
+                  <span class="b-num" aria-hidden="true">{n}</span>
+                  <div class="b-body">
+                    <h3 class="b-title">
+                      {isLatin ? (
+                        <>
+                          <span class="b-t-latin" dir="ltr" lang={b.lang}>{b.title}</span>
+                          {b.titleAr && <span class="b-t-ar">{b.titleAr}</span>}
+                        </>
+                      ) : (
+                        <span>«{b.title}»</span>
+                      )}
+                    </h3>
+                    <p class="b-meta">
+                      <span class="b-author" dir="auto">{b.author}</span>
+                      <span class="b-year">{b.year}</span>
+                      <span class="b-lang">{langLabel[b.lang]}</span>
+                    </p>
+                    {b.edition && <p class="b-edition" dir="auto">{b.edition}</p>}
+                    <p class="b-why">{b.why}</p>
+                    <div class="b-foot">
+                      {b.free && (
+                        <a class="b-free" href={b.free.url} rel="noopener" target="_blank">
+                          <span class="b-free-label">{b.free.label}</span>
+                          <span class="b-free-basis">
+                            مجاني · {freeBasisLabel[b.free.basis]}
+                            {b.free.note && ` · ${b.free.note}`}
+                          </span>
+                        </a>
+                      )}
+                      {b.stations && b.stations.length > 0 && (
+                        <p class="b-st">
+                          <span>يرافق المحطات:</span>
+                          {b.stations.map((id) => {
+                            const s = stationById.get(id)!;
+                            return (
+                              <a class="tag" href={stationUrl(s)}>
+                                {s.id} {s.short}
+                              </a>
+                            );
+                          })}
+                        </p>
+                      )}
+                      {!b.free && b.ref && (
+                        <a class="b-ref" href={b.ref} rel="noopener" target="_blank">بيانات النشر</a>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .b-intro {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) 1.5rem;
+  }
+  .b-rules {
+    margin-top: 1.25rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+  .b-rules li {
+    padding-inline-start: 1.1rem;
+    border-inline-start: 2px solid var(--copper-soft);
+    line-height: 1.85;
+  }
+
+  .b-path ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-block: 1px solid var(--rule-strong);
+  }
+  .b-path li + li {
+    border-inline-start: 1px solid var(--rule);
+  }
+  .b-path a {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.9rem 0.85rem;
+    text-decoration: none;
+    color: var(--ink);
+    height: 100%;
+  }
+  .b-path a:hover {
+    background: var(--paper);
+  }
+  .bp-n {
+    font-family: var(--font-display);
+    color: var(--copper);
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+  .bp-name {
+    font-family: var(--font-display);
+    color: var(--prussian);
+    font-size: 1.02rem;
+  }
+  .bp-when {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  .b-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.2rem;
+    padding-block: 1.25rem;
+  }
+  .b-tools fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .b-tools legend {
+    float: inline-start;
+    margin-inline-end: 0.4rem;
+    font-family: var(--font-display);
+    color: var(--prussian);
+    font-size: 0.95rem;
+  }
+  .b-count {
+    margin: 0;
+    margin-inline-start: auto;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  .b-empty {
+    padding: 1.5rem;
+    background: var(--paper);
+    border: 1px dashed var(--rule-strong);
+    text-align: center;
+  }
+  .linklike {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--prussian);
+    text-decoration: underline;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .b-stage {
+    padding-block: 2.5rem 1rem;
+    border-top: 1px solid var(--rule-strong);
+  }
+  .b-stage:first-of-type {
+    border-top: 0;
+  }
+  .bs-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1.5rem;
+    align-items: start;
+    margin-bottom: 1.5rem;
+  }
+  .bs-n {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 4.5rem);
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1.2px var(--copper);
+  }
+  .bs-head h2 {
+    margin: 0.2rem 0 0.4rem;
+  }
+  .bs-lead {
+    margin: 0;
+    max-width: var(--measure);
+    color: var(--ink-soft);
+  }
+
+  .b-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+  .book {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 1rem;
+    padding-block: 1.4rem;
+    border-top: 1px solid var(--rule);
+  }
+  .book[hidden] {
+    display: none;
+  }
+  .b-num {
+    font-family: var(--font-display);
+    color: var(--copper);
+    font-size: 1.15rem;
+    padding-top: 0.2rem;
+    text-align: center;
+  }
+  .b-body {
+    max-width: 48rem;
+  }
+  .b-title {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .b-t-latin {
+    font-family: var(--font-latin);
+    font-weight: 600;
+    color: var(--prussian);
+    font-size: 1.12rem;
+    /* عنوان لاتيني داخل صفحة عربية: يبقى اتجاهه LTR لكنه يحاذى يميناً مع بقية السطر. */
+    text-align: right;
+    align-self: flex-start;
+    unicode-bidi: isolate;
+  }
+  .b-t-ar {
+    font-family: var(--font-body);
+    font-weight: 400;
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+  .b-meta {
+    margin: 0.45rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.9rem;
+    font-size: 0.95rem;
+  }
+  .b-author {
+    color: var(--ink);
+    unicode-bidi: isolate;
+  }
+  .b-year {
+    color: var(--copper);
+    font-family: var(--font-display);
+  }
+  .b-lang {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    padding: 0 0.6rem;
+  }
+  .b-edition {
+    text-align: right;
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .b-why {
+    margin: 0.7rem 0 0;
+    line-height: 1.95;
+  }
+  .b-foot {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+  }
+  .b-free {
+    display: inline-grid;
+    gap: 0.05rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--prussian);
+    color: var(--ivory);
+    text-decoration: none;
+    border-radius: var(--radius);
+  }
+  .b-free:hover {
+    background: var(--prussian-deep);
+  }
+  .b-free-label {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+  }
+  .b-free-basis {
+    font-size: 0.78rem;
+    opacity: 0.85;
+  }
+  .b-st {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .b-ref {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 52rem) {
+    .b-path ol {
+      grid-template-columns: 1fr;
+    }
+    .b-path li + li {
+      border-inline-start: 0;
+      border-top: 1px solid var(--rule);
+    }
+    .b-path a {
+      grid-template-columns: 2rem 1fr;
+      align-items: baseline;
+      padding: 0.65rem 0.25rem;
+    }
+    .bp-when {
+      grid-column: 2;
+    }
+    .b-count {
+      margin-inline-start: 0;
+      width: 100%;
+    }
+    .book {
+      grid-template-columns: 1.8rem 1fr;
+      gap: 0.6rem;
+    }
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('.b-tools');
+  if (form) {
+    const items = [...document.querySelectorAll<HTMLLIElement>('.book')];
+    const sections = [...document.querySelectorAll<HTMLElement>('.b-stage')];
+    const freeOnly = form.querySelector<HTMLInputElement>('#b-free')!;
+    const count = document.getElementById('b-count')!;
+    const empty = document.getElementById('b-empty')!;
+    const lang = () => form.querySelector<HTMLInputElement>('input[name="b-lang"]:checked')?.value ?? '';
+    const apply = () => {
+      const l = lang();
+      let shown = 0;
+      for (const it of items) {
+        const okLang = !l || (l === 'other' ? !['ar', 'en'].includes(it.dataset.lang!) : it.dataset.lang === l);
+        const ok = okLang && (!freeOnly.checked || it.dataset.free === '1');
+        it.hidden = !ok;
+        if (ok) shown++;
+      }
+      sections.forEach((s) => (s.hidden = !s.querySelector('.book:not([hidden])')));
+      count.textContent = `تُعرض ${shown} من ${items.length} كتاباً.`;
+      empty.hidden = shown !== 0;
+    };
+    form.addEventListener('change', apply);
+    document.getElementById('b-reset')?.addEventListener('click', () => {
+      form.reset();
+      apply();
+    });
+  }
+</script>

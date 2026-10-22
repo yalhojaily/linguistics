@@ -19,6 +19,7 @@ export const nav = [
   { href: 'people/', label: 'الأعلام' },
   { href: 'glossary/', label: 'المعجم' },
   { href: 'lab/', label: 'المختبر' },
+  { href: 'books/', label: 'كتب اللسانيات' },
   { href: 'sources/', label: 'المصادر' },
   { href: 'method/', label: 'المنهجية' },
 ];

@@ -14,7 +14,7 @@ const stationsDir = join(dist, 'stations');
 const slugs = existsSync(stationsDir) ? readdirSync(stationsDir) : [];
 ok(slugs.length === 26, `عدد صفحات المحطات ${slugs.length} بدلاً من 26.`);
 
-for (const page of ['index.html', 'journey/index.html', 'timeline/index.html', 'people/index.html', 'glossary/index.html', 'lab/index.html', 'sources/index.html', 'method/index.html', '404.html']) {
+for (const page of ['index.html', 'journey/index.html', 'timeline/index.html', 'people/index.html', 'glossary/index.html', 'lab/index.html', 'sources/index.html', 'books/index.html', 'method/index.html', '404.html']) {
   ok(existsSync(join(dist, page)), `الصفحة مفقودة: ${page}`);
 }
 
@@ -38,8 +38,17 @@ for (const slug of slugs) {
   for (const m of html.matchAll(/href="#src-(s\d+)"/g)) ok(listed.has(m[1]), `${slug}: إحالة إلى ${m[1]} غير مدرجة في مصادر المحطة.`);
 }
 
+const booksHtml = existsSync(join(dist, 'books/index.html')) ? readFileSync(join(dist, 'books/index.html'), 'utf8') : '';
+const bookCount = (booksHtml.match(/class="book"/g) ?? []).length;
+ok(bookCount >= 40, `صفحة الكتب تعرض ${bookCount} كتاباً فقط.`);
+// كل رابط مجاني يجب أن يكون من نطاق معتمد للملكية العامة أو الوصول المفتوح أو صفحة المؤلف.
+const FREE_HOSTS = ['ecampusontario.pressbooks.pub', 'langsci-press.org', 'opendata.uni-halle.de', 'ar.wikisource.org', 'fr.wikisource.org', 'archive.org', 'www.projekt-gutenberg.org', 'www.gutenberg.org', 'gutenberg.org', 'web.stanford.edu'];
+for (const m of booksHtml.matchAll(/class="b-free" href="([^"]+)"/g)) {
+  ok(FREE_HOSTS.includes(new URL(m[1].replace(/&amp;/g, '&')).hostname), `رابط مجاني من نطاق غير معتمد: ${m[1]}`);
+}
+
 if (errors.length) {
   console.error('فشل الفحص:\n- ' + errors.join('\n- '));
   process.exit(1);
 }
-console.log(`فحص البيانات ناجح: ${slugs.length} محطة، ${srcIds.size} مرجعاً، وكل إحالات المحطات مدرجة.`);
+console.log(`فحص البيانات ناجح: ${slugs.length} محطة، ${srcIds.size} مرجعاً، وكل إحالات المحطات مدرجة، و${bookCount} كتاباً.`);
