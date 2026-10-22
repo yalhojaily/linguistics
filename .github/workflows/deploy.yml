@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate built content (26 stations, 38 sources)
+      - name: Validate built content (26 stations, sections, sources, citations)
         run: node scripts/validate-data.mjs
 
   deploy:
