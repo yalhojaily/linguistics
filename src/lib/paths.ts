@@ -22,4 +22,5 @@ export const nav = [
   { href: 'books/', label: 'كتب اللسانيات' },
   { href: 'sources/', label: 'المصادر' },
   { href: 'method/', label: 'المنهجية' },
+  { href: 'full/', label: 'المحتوى الكامل' },
 ];

@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const RANGE = /(?<![\d\w])(\d{1,4}(?:\s?[–\-\/]\s?\d{1,4})+)(?![\d\w])/g;
 const HAS_RANGE = new RegExp(RANGE.source);
+// الرموز الصوتية بين شرطتين مائلتين مثل /z/ أو /b, d, g/ أو /sˤ/.
+const PHON = /(?<![\w\/])(\/[a-zA-Z\u0250-\u02AF\u02B0-\u02FF]+(?:,\s?[a-zA-Z\u0250-\u02AF\u02B0-\u02FF]+)*\/)(?![\w\/])/g;
+const HAS_PHON = new RegExp(PHON.source);
 const SKIP = /<(title|script|style|svg|option|textarea)\b[\s\S]*?<\/\1>/gi;
 
 export function isolateRanges(html) {
@@ -19,9 +22,16 @@ export function isolateRanges(html) {
   return parts
     .map(([chunk, edit]) =>
       edit
-        ? chunk.replace(/>([^<]+)</g, (all, text) =>
-            HAS_RANGE.test(text) ? '>' + text.replace(RANGE, '<span dir="ltr" class="num-range">$1</span>') + '<' : all,
-          )
+        ? chunk.replace(/>([^<]+)</g, (all, text) => {
+            if (!HAS_RANGE.test(text) && !HAS_PHON.test(text)) return all;
+            return (
+              '>' +
+              text
+                .replace(RANGE, '<span dir="ltr" class="num-range">$1</span>')
+                .replace(PHON, '<span dir="ltr" class="ipa">$1</span>') +
+              '<'
+            );
+          })
         : chunk,
     )
     .join('');

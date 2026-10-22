@@ -14,7 +14,7 @@ const stationsDir = join(dist, 'stations');
 const slugs = existsSync(stationsDir) ? readdirSync(stationsDir) : [];
 ok(slugs.length === 26, `عدد صفحات المحطات ${slugs.length} بدلاً من 26.`);
 
-for (const page of ['index.html', 'journey/index.html', 'timeline/index.html', 'people/index.html', 'glossary/index.html', 'lab/index.html', 'sources/index.html', 'books/index.html', 'method/index.html', '404.html']) {
+for (const page of ['index.html', 'journey/index.html', 'timeline/index.html', 'people/index.html', 'glossary/index.html', 'lab/index.html', 'sources/index.html', 'books/index.html', 'method/index.html', 'full/index.html', '404.html']) {
   ok(existsSync(join(dist, page)), `الصفحة مفقودة: ${page}`);
 }
 
@@ -46,6 +46,15 @@ const FREE_HOSTS = ['ecampusontario.pressbooks.pub', 'langsci-press.org', 'opend
 for (const m of booksHtml.matchAll(/class="b-free" href="([^"]+)"/g)) {
   ok(FREE_HOSTS.includes(new URL(m[1].replace(/&amp;/g, '&')).hostname), `رابط مجاني من نطاق غير معتمد: ${m[1]}`);
 }
+
+// «المحتوى الكامل»: كل المحطات وأقسامها في صفحة واحدة، بلا أزرار ولا طي ولا روابط قفز داخلية.
+const fullHtml = existsSync(join(dist, 'full/index.html')) ? readFileSync(join(dist, 'full/index.html'), 'utf8') : '';
+const fullMain = fullHtml.split('<main')[1] ?? '';
+ok((fullMain.match(/class="f-st /g) ?? []).length === 26, 'صفحة المحتوى الكامل لا تضم المحطات الست والعشرين.');
+ok(!/<details|<button|<select|<input/.test(fullMain), 'صفحة المحتوى الكامل تحتوي عناصر تفاعلية أو طياً.');
+ok(!/href="#/.test(fullMain), 'صفحة المحتوى الكامل تحتوي روابط قفز داخلية.');
+ok((fullMain.match(/class="f-deep"/g) ?? []).length >= 90, 'صفحة المحتوى الكامل ينقصها الشرح الموسع.');
+ok((fullMain.match(/class="f-src-cite"/g) ?? []).length === EXPECTED_SOURCES, 'صفحة المحتوى الكامل لا تضم كل المراجع.');
 
 if (errors.length) {
   console.error('فشل الفحص:\n- ' + errors.join('\n- '));

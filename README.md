@@ -42,7 +42,7 @@ src/data/                                المحتوى منفصلاً عن ال
   corpus.ts     نصوص المدونة التعليمية (مؤلفة ومعلنة)
   books.ts      «كتب اللسانيات»: مسار القراءة المتدرج وروابط الكتب المجانية القانونية
 src/components/   مكونات الواجهة والأنشطة (labs/)
-src/pages/        الصفحات؛ stations/[slug].astro تولّد صفحة لكل محطة
+src/pages/        الصفحات؛ stations/[slug].astro تولّد صفحة لكل محطة، وfull.astro تجمع المحتوى كله في صفحة واحدة
 scripts/validate-data.mjs   فحص الناتج بعد البناء
 ```
 

@@ -1,0 +1,979 @@
+---
+/**
+ * «المحتوى الكامل»: كل مادة الموقع في صفحة واحدة متصلة للقراءة من أولها إلى آخرها.
+ * لا فهرس داخلي، ولا أزرار انتقال أو طي، ولا روابط قفز بين الأقسام. الأنشطة التفاعلية
+ * تُذكر بأهدافها وأمثلتها فقط. الروابط الوحيدة روابط خارجية إلى المصادر والكتب المجانية.
+ */
+import Base from '../layouts/Base.astro';
+import Pic from '../components/Pic.astro';
+import KindMark from '../components/KindMark.astro';
+import ScopeFigure from '../components/figures/ScopeFigure.astro';
+import LevelsFigure from '../components/figures/LevelsFigure.astro';
+import { stations, stationById } from '../data/stations';
+import { enrichment } from '../data/enrichment';
+import { eras, tracks, shifts, dateKinds, relations } from '../data/taxonomy';
+import { sources, sourceById, sourceGroups, sourceKinds, type SourceGroup } from '../data/sources';
+import { glossary } from '../data/glossary';
+import { books, stages, freeBasisLabel, langLabel } from '../data/books';
+import { people } from '../data/people';
+import { images } from '../data/images';
+import { centralIdea, centralQuestion, subQuestions, corrections, futureTopics, site } from '../data/editorial';
+import { allSourceIds } from '../lib/stationSources';
+import type { DateKind } from '../data/types';
+
+const label = (id: string) => sourceById.get(id as `s${string}`)!.label;
+const stName = (id: string) => {
+  const s = stationById.get(id)!;
+  return `${s.id} ${s.short}`;
+};
+const labGoal: Record<string, { name: string; goal: string }> = {
+  irab: {
+    name: 'نشاط «تبديل الإعراب»',
+    goal: 'ملاحظة أن علامات الإعراب في العربية تحدد مَن فعل ومَن وقع عليه الفعل، حتى حين يبقى ترتيب الاسمين كما هو. يبدّل الزائر الحركات على المثال المؤلف فيتبدل الفاعل والمفعول.',
+  },
+  deixis: {
+    name: 'نشاط «أنا هنا الآن»',
+    goal: 'ملاحظة أن بعض الكلمات لا تُفهم إحالتها إلا من موقف الكلام. يغيّر الزائر المتكلم والمكان والوقت (أشخاص وأماكن متخيلة)، فيتغير ما تشير إليه «أنا» و«هنا» و«الآن».',
+  },
+  corpus: {
+    name: 'نشاط «مدونة تعليمية صغيرة»',
+    goal: 'تجربة البحث في مدونة من نصوص مؤلفة ومعلنة: كيف تُعرض السياقات، وكيف يُحسب التكرار، وكيف تغيّر طريقة البحث النتيجة. والنتائج تخص هذه العينة الصغيرة لا اللغة كلها.',
+  },
+};
+const groups = Object.keys(sourceGroups) as SourceGroup[];
+const enCount = Object.values(enrichment).reduce((n, e) => n + e.deep.length, 0);
+let bookN = 0;
+---
+
+<Base
+  title="المحتوى الكامل"
+  description="كل مادة «كيف فهمنا اللغة؟» في صفحة واحدة متصلة: المحطات الست والعشرون بشرحها الموسع، والأعلام، والمعجم، والكتب، والمصادر."
+  current="full/"
+>
+  <article class="full">
+    <header class="wrap f-head">
+      <p class="eyebrow">{site.title} · {site.subtitle}</p>
+      <h1>المحتوى الكامل</h1>
+      <p class="lede measure">
+        كل ما في الموقع في صفحة واحدة تُقرأ من أولها إلى آخرها: {stations.length} محطة بشرحها الأساسي و{enCount} قسماً من الشرح الموسع، ثم الأعلام، وضوابط المادة،
+        و{glossary.length} مصطلحاً، و{books.length} كتاباً مقترحاً، و{sources.length} مرجعاً.
+      </p>
+      <p class="f-note measure">
+        الأنشطة التفاعلية لا تعمل في هذه الصفحة؛ تُذكر أهدافها وأمثلتها فقط. الإحالات من نوع «م05» تشير إلى قائمة المراجع في آخر الصفحة. أُعدّت المادة وتُحقق
+        من روابطها في {site.preparedOn}، وأضيف الشرح الموسع ومراجعه (م39 فما بعد) في 22 أكتوبر 2026.
+      </p>
+    </header>
+
+    <!-- ═══════════════════ الفكرة والسؤال -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">أولاً</span> الفكرة والسؤال</h2>
+      <p class="f-idea measure">{centralIdea}</p>
+      <p class="f-cq">{centralQuestion}</p>
+      <p class="measure">تتفرع منه أسئلة الرحلة:</p>
+      <ol class="f-subq measure">{subQuestions.map((q) => <li>{q}</li>)}</ol>
+    </section>
+
+    <!-- ═══════════════════ كيف تُقرأ المادة -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">ثانياً</span> كيف تُقرأ هذه المادة</h2>
+      <div class="measure">
+        <p>
+          مادة منتقاة لبناء رحلة تعليمية، وليست استقصاءً لكل ما كُتب في تاريخ اللسانيات. بُنيت على مراجع جامعية، وفصول من كتب تاريخية متخصصة، وموسوعات
+          أكاديمية، وأبحاث أصلية، ومواقع مؤسسات علمية. ويركز الموقع على تاريخ <em>دراسة</em> اللغة، لا على تاريخ تطور اللغات نفسها.
+        </p>
+        <h3>ثلاثة أنواع من المحتوى</h3>
+        <dl class="f-dl">
+          <div><dt>وقائع تاريخية</dt><dd>مثل نشر كتاب أو ظهور مشروع بحثي، وترتبط بمصدر.</dd></div>
+          <div><dt>شرح مبسّط</dt><dd>صياغة عربية تفسيرية لمفهوم، لا ترجمة حرفية للمصدر.</dd></div>
+          <div><dt>أمثلة مؤلفة</dt><dd>جمل وأنشطة كُتبت للتعليم، موسومة بوضوح، ولا تُنسب إلى أصحاب النظريات ولا تُقدَّم بيانات لغوية حقيقية.</dd></div>
+        </dl>
+        <h3>التواريخ</h3>
+        <p>
+          التواريخ الممتدة تقريبية وتصف فترات نشاط أو تبلور. السنة المفردة تشير إلى واقعة محددة، ولا تعني بالضرورة بداية الحقل. ولا يُوضع حدث مختلف على تأريخه
+          في يوم أو شهر مختلق. أرقام المحطات تنظيمية: حين تتداخل الفترات، لا يدل ترتيب القراءة على أن اتجاهاً نشأ من الآخر.
+        </p>
+        <ul class="f-kinds">
+          {(Object.keys(dateKinds) as DateKind[]).map((k) => (
+            <li><KindMark kind={k} size={16} /><strong>{dateKinds[k].name}</strong>: {dateKinds[k].hint}.</li>
+          ))}
+        </ul>
+        <h3>أنواع التحول</h3>
+        <ul>{Object.values(shifts).map((v) => <li><strong>{v.name}:</strong> {v.hint}.</li>)}</ul>
+        <h3>العلاقات بين المحطات</h3>
+        <ul>
+          <li><strong>{relations.before}:</strong> حين لا تثبت علاقة تأثير.</li>
+          <li><strong>{relations.near}:</strong> للمقارنة المفهومية، دون نسب تاريخي.</li>
+          <li><strong>تأثر به:</strong> لا تُستخدم إلا حين يوجد مصدر متخصص يثبتها؛ ولم تُستخدم في الإصدار الحالي.</li>
+        </ul>
+        <h3>الحقب</h3>
+        <p>الحقب تجميع تحريري للقراءة، وليست تقسيماً معتمداً في تاريخ العلم.</p>
+        <dl class="f-dl">
+          {eras.map((e) => (
+            <div><dt>{e.name} <span class="f-muted">({e.range})</span></dt><dd>{e.intro}</dd></div>
+          ))}
+        </dl>
+        <h3>المسارات الموضوعية</h3>
+        <p>تنظيم تحريري يجمع محطات تعالج أسئلة متقاربة، وليس مخططاً مثبتاً لانتقال التأثير. قد تظهر المحطة في أكثر من مسار.</p>
+        <dl class="f-dl">
+          {tracks.map((t) => (
+            <div><dt>{t.name}</dt><dd>{t.question} <span class="f-muted">المحطات: {t.stations.join('، ')}.</span></dd></div>
+          ))}
+        </dl>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ نظرة زمنية -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">ثالثاً</span> نظرة زمنية سريعة</h2>
+      <p class="measure">التواريخ الممتدة تقريبية. السنة المفردة تشير إلى واقعة محددة.</p>
+      <div class="f-table">
+        <table>
+          <thead>
+            <tr><th scope="col">المحطة</th><th scope="col">الزمن المعروض</th><th scope="col">نوعها</th><th scope="col">السؤال</th></tr>
+          </thead>
+          <tbody>
+            {stations.map((s) => (
+              <tr><th scope="row">{s.id} · {s.short}</th><td data-label="الزمن">{s.period}</td><td data-label="النوع">{s.typeLabel}</td><td data-label="السؤال">{s.question}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ المحطات -->
+    <section class="f-part f-stations">
+      <div class="wrap">
+        <h2><span class="f-pn">رابعاً</span> المحطات الست والعشرون</h2>
+      </div>
+      {
+        eras.map((era) => (
+          <div class="f-era">
+            <div class="wrap">
+              <h3 class="f-era-h">{era.name} <span>{era.range}</span></h3>
+              <p class="f-era-intro measure">{era.intro}</p>
+            </div>
+            {stations
+              .filter((s) => s.era === era.id)
+              .map((s) => {
+                const en = enrichment[s.id];
+                const hero = s.image ? images[s.image] : undefined;
+                const portrait = s.portrait ? images[s.portrait] : undefined;
+                const srcs = allSourceIds(s).map((id) => sourceById.get(id)!);
+                return (
+                  <article class="f-st wrap">
+                    <header class="f-st-head">
+                      <p class="f-st-num" aria-hidden="true">{s.id}</p>
+                      <div>
+                        <p class="eyebrow">المحطة {s.id} · {s.typeLabel} · {shifts[s.shift].name}</p>
+                        <h4>{s.title}</h4>
+                        <p class="f-st-period">{s.period}</p>
+                        <ul class="f-dates">
+                          {s.dates.map((d) => (
+                            <li>
+                              <KindMark kind={d.kind} size={14} />
+                              <span class="f-d-label">{d.label}</span>
+                              <span class="f-muted">{dateKinds[d.kind].name}{d.note && ` · ${d.note}`}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p class="f-muted f-st-tracks">المسارات: {s.tracks.map((t) => tracks.find((x) => x.id === t)!.name).join('، ')}</p>
+                      </div>
+                    </header>
+
+                    {hero && (
+                      <figure class="f-fig f-hero">
+                        <Pic id={hero.id} sizes="(min-width: 76rem) 70rem, 100vw" ratio="16 / 7" />
+                        <figcaption>{hero.caption}</figcaption>
+                      </figure>
+                    )}
+
+                    <div class="f-st-body">
+                      <p class="f-q"><span>السؤال المركزي</span>{s.question}</p>
+
+                      <h5>الفكرة</h5>
+                      {s.body.map((p) => <p>{p}</p>)}
+
+                      <h5>ما الذي تغيّر؟</h5>
+                      <p class="f-changed">{s.changed}</p>
+
+                      {en && (
+                        <>
+                          <h5>تعمّق</h5>
+                          {en.deep.map((d) => (
+                            <section class="f-deep">
+                              <h6>{d.heading}</h6>
+                              {d.paras.map((p) => <p>{p}</p>)}
+                              <p class="f-cite">المصادر: {d.sources.map(label).join('، ')}</p>
+                            </section>
+                          ))}
+                        </>
+                      )}
+
+                      {en?.milestones && en.milestones.length > 0 && (
+                        <>
+                          <h5>وقائع مؤرخة</h5>
+                          <ol class="f-chrono">
+                            {en.milestones.map((m) => (
+                              <li>
+                                <span class="f-c-when">{m.when}</span>
+                                <span>{m.what}</span>
+                                <span class="f-muted">
+                                  {dateKinds[m.kind].name}
+                                  {m.approx && ' · تقريبي'} · {m.sources.map(label).join('، ')}
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        </>
+                      )}
+
+                      {en?.concepts && en.concepts.length > 0 && (
+                        <>
+                          <h5>مفاهيم أساسية</h5>
+                          <dl class="f-concepts">
+                            {en.concepts.map((c) => (
+                              <div>
+                                <dt>
+                                  {c.term}
+                                  {c.latin && <span class="f-latin" dir="ltr" lang="en">{c.latin}</span>}
+                                </dt>
+                                <dd>{c.def}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </>
+                      )}
+
+                      {(s.people?.length || s.works?.length || en?.readings?.length || portrait) && (
+                        <>
+                          <h5>الأعلام والأعمال</h5>
+                          <div class:list={['f-people', { 'has-portrait': portrait }]}>
+                            {portrait && (
+                              <figure class="f-fig f-portrait">
+                                <Pic id={portrait.id} sizes="(min-width: 60rem) 20rem, 70vw" />
+                                <figcaption>{portrait.caption}</figcaption>
+                              </figure>
+                            )}
+                            <div>
+                              {s.people && s.people.length > 0 && (
+                                <p>
+                                  <strong>الأعلام:</strong>{' '}
+                                  {s.people.map((p, i) => (
+                                    <>
+                                      {i > 0 && '، '}
+                                      {p.ar}
+                                      {p.latin && <span class="f-latin" dir="ltr" lang="en">{p.latin}</span>}
+                                    </>
+                                  ))}
+                                </p>
+                              )}
+                              {s.works && s.works.length > 0 && (
+                                <p>
+                                  <strong>أعمال مرتبطة:</strong>{' '}
+                                  {s.works.map((w, i) => (
+                                    <>
+                                      {i > 0 && '؛ '}«{w.title}»
+                                      {w.latin && <span class="f-latin" dir="ltr" lang="en">{w.latin}</span>}
+                                      {(w.by || w.year) && <span class="f-muted"> ({[w.by, w.year].filter(Boolean).join('، ')})</span>}
+                                    </>
+                                  ))}
+                                </p>
+                              )}
+                              {en?.readings && en.readings.length > 0 && (
+                                <p>
+                                  <strong>نصوص تأسيسية للرجوع إليها:</strong>{' '}
+                                  {en.readings.map((w, i) => (
+                                    <>
+                                      {i > 0 && '؛ '}«{w.title}»
+                                      {w.latin && <span class="f-latin" dir="ltr" lang="en">{w.latin}</span>}
+                                      {(w.by || w.year || w.note) && <span class="f-muted"> ({[w.by, w.year, w.note].filter(Boolean).join('، ')})</span>}
+                                    </>
+                                  ))}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {(s.example || s.lab || s.figure || s.reflect) && (
+                        <>
+                          <h5>{s.example ? 'مثال تعليمي' : s.figure ? 'رسم توضيحي' : 'للتأمل'}</h5>
+                          {s.example && (
+                            <figure class="f-example">
+                              <p class="f-muted">مثال مؤلف للتعليم</p>
+                              {s.example.lines.map((l) => <p class="f-ex-line">{l}</p>)}
+                              <figcaption>{s.example.explain}</figcaption>
+                            </figure>
+                          )}
+                          {s.lab && (
+                            <p class="f-lab"><strong>{labGoal[s.lab].name} (تفاعلي في صفحة المحطة):</strong> {labGoal[s.lab].goal}</p>
+                          )}
+                          {s.figure === 'scope' && <ScopeFigure />}
+                          {s.figure === 'levels' && <LevelsFigure />}
+                          {s.reflect && <p class="f-reflect"><strong>للتأمل:</strong> {s.reflect}</p>}
+                        </>
+                      )}
+
+                      <h5>حدود الفكرة وموضع الخلاف</h5>
+                      <ul class="f-limits">{s.limits.map((l) => <li>{l}</li>)}</ul>
+
+                      <h5>المصادر</h5>
+                      <ul class="f-st-src">
+                        {srcs.map((x) => (
+                          <li><span class="f-lbl">{x.label}</span> <span dir={/[؀-ۿ]/.test(x.citation) ? 'rtl' : 'ltr'}>{x.citation}</span></li>
+                        ))}
+                      </ul>
+
+                      <h5>محطات ذات صلة</h5>
+                      <ul class="f-related">
+                        {s.related.map((r) => (
+                          <li>
+                            {stName(r.id)} <span class="f-muted">— {relations[r.rel]}{r.note && `: ${r.note}`}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </article>
+                );
+              })}
+          </div>
+        ))
+      }
+    </section>
+
+    <!-- ═══════════════════ الأعلام -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">خامساً</span> الأعلام المصوَّرون</h2>
+      <p class="measure">
+        يربط هذا القسم كل علم بمحطته وإسهامه كما يرد في المادة المرجعية، دون سيرة شخصية إضافية. الصور كلها أعمال فنية: التصورات التخيّلية لا تدّعي معرفة ملامح
+        أصحابها، والبورتريهات المولّدة ليست صوراً أرشيفية. وصورهم معروضة في محطاتهم أعلاه.
+      </p>
+      <dl class="f-dl measure">
+        {people.map((p) => (
+          <div>
+            <dt>
+              {p.name}
+              {p.latin && <span class="f-latin" dir="ltr" lang="en">{p.latin}</span>}
+              <span class="f-muted"> · {p.era} · المحطة {stName(p.station)}</span>
+            </dt>
+            <dd>
+              {p.contribution}
+              {p.works.length > 0 && <span class="f-muted"> أعمال مرتبطة: {p.works.map((w) => `«${w}»`).join('، ')}.</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <!-- ═══════════════════ الضوابط -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">سادساً</span> ضوابط المادة</h2>
+      <div class="measure">
+        <h3>ما الذي لا يقوله الموقع؟</h3>
+        <p>ضوابط تحريرية مستخلصة من تنوع التاريخ والمناهج، وليست قائمة أخطاء منسوبة إلى مرجع واحد.</p>
+        <ul class="f-corr">
+          {corrections.map((c) => (
+            <li>
+              <p><span class="f-tag-wrong">صياغة مضللة</span> {c.wrong}</p>
+              <p><span class="f-tag-better">صياغة أدق</span> {c.better}</p>
+            </li>
+          ))}
+        </ul>
+        <h3>سياسة المصادر</h3>
+        <ul>
+          <li>ربط كل واقعة جوهرية بمصدر يدعمها تحديداً.</li>
+          <li>فصل تاريخ الحدث عن تاريخ إتاحة النص إلكترونياً؛ فقد يظهر بحث قديم بتاريخ إتاحة حديث.</li>
+          <li>عدم الاستشهاد بملخص فصل لإسناد تفاصيل غير موجودة فيه.</li>
+          <li>عدم إعادة استخدام مثال مصطنع بوصفه بيانات لغوية حقيقية.</li>
+          <li>توضيح الخلاف في تأريخ القدماء أو نسبة الأفكار بدلاً من إخفائه.</li>
+          <li>التمييز بين مرجع تاريخي يصف مدرسة، وورقة تمثل موقف أصحابها.</li>
+          <li>تحديث قسم الحوسبة مستقلاً؛ فالتاريخ القديم أكثر استقراراً من وصف أحدث النماذج.</li>
+        </ul>
+        <h3>الصور</h3>
+        <p>
+          الصور الاثنتا عشرة أعمال فنية مولّدة أُعدّت لهذا المشروع. المشاهد العامة رمزية، والبورتريهات تصورات تخيّلية أو بورتريهات مولّدة، وليست صوراً أرشيفية. لا
+          تُعدّ الزخارف أو الكتابات الظاهرة داخل الصور مصدراً لأي معلومة.
+        </p>
+        <ul>{Object.values(images).map((im) => <li><strong>{im.title}:</strong> {im.caption}</li>)}</ul>
+        <h3>خارج التفصيل الحالي</h3>
+        <p>موضوعات ليست غائبة عن تاريخ العلم، لكنها خارج تفصيل هذا الإصدار: {futureTopics.join('، ')}.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ المعجم -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">سابعاً</span> معجم المصطلحات</h2>
+      <p class="measure">
+        {glossary.length} مصطلحاً. التعريفات مبسطة للقارئ غير المتخصص؛ يبدأ المعجم بالمصطلحات التمهيدية من المادة المرجعية، ثم مفاهيم المحطات الموسعة. الأرقام بين
+        القوسين أرقام المحطات.
+      </p>
+      <dl class="f-gloss">
+        {glossary.map((t) => (
+          <div>
+            <dt>
+              {t.ar}
+              {t.en && <span class="f-latin" dir="ltr" lang="en">{t.en}</span>}
+            </dt>
+            <dd>{t.def} <span class="f-muted">({t.stations.join('، ')})</span></dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <!-- ═══════════════════ الكتب -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">ثامناً</span> كتب اللسانيات</h2>
+      <p class="measure">
+        مسار قراءة مقترح من المدخل إلى المراجع المتقدمة. القائمة اختيار تحريري لا حصر. لا يوضع رابط مجاني إلا إذا كان الكتاب في الملكية العامة، أو منشوراً بوصول
+        مفتوح، أو يتيحه مؤلفوه أنفسهم. وقد تختلف حالة الملكية العامة من بلد إلى آخر.
+      </p>
+      {stages.map((st) => (
+        <div class="f-stage">
+          <h3>المرحلة {st.n}: {st.name} <span class="f-muted">({st.when})</span></h3>
+          <p class="measure">{st.lead}</p>
+          <ol class="f-books" start={bookN + 1}>
+            {books
+              .filter((b) => b.stage === st.id)
+              .map((b) => {
+                bookN += 1;
+                return (
+                  <li>
+                    <p class="f-b-title">
+                      {b.lang === 'ar' ? (
+                        <strong>«{b.title}»</strong>
+                      ) : (
+                        <>
+                          <strong class="f-latin-t" dir="ltr" lang={b.lang}>{b.title}</strong>
+                          {b.titleAr && <span class="f-muted"> ({b.titleAr})</span>}
+                        </>
+                      )}
+                    </p>
+                    <p class="f-muted">
+                      <span dir="auto">{b.author}</span> · {b.year} · {langLabel[b.lang]}
+                      {b.edition && <> · <span dir="auto">{b.edition}</span></>}
+                    </p>
+                    <p>{b.why}</p>
+                    {b.free && (
+                      <p class="f-free">
+                        مجاني ({freeBasisLabel[b.free.basis]}{b.free.note && `، ${b.free.note}`}):{' '}
+                        <a href={b.free.url} rel="noopener">{b.free.label}</a>
+                      </p>
+                    )}
+                    {b.stations && b.stations.length > 0 && <p class="f-muted">يرافق المحطات: {b.stations.join('، ')}</p>}
+                  </li>
+                );
+              })}
+          </ol>
+        </div>
+      ))}
+    </section>
+
+    <!-- ═══════════════════ المصادر -->
+    <section class="wrap f-part">
+      <h2><span class="f-pn">تاسعاً</span> المراجع المشروحة</h2>
+      <p class="measure">
+        لكل مرجع نوعه، وما يدعمه في الموقع، وما استُخدم منه فعلاً. استُخدمت النصوص المفتوحة والمقتطفات والملخصات الأكاديمية المتاحة وصفحات بيانات النشر، ولم
+        تُفترض قراءة الكتب المدفوعة كاملة. المراجع م01–م38 من المادة المرجعية الأصلية، والمراجع من م39 فما بعد أضيفت للشرح الموسع.
+      </p>
+      {groups.map((g) => (
+        <div class="f-src-group">
+          <h3>{sourceGroups[g]}</h3>
+          <ol class="f-src">
+            {sources
+              .filter((x) => x.group === g)
+              .map((x) => {
+                const ar = /[؀-ۿ]/.test(x.citation);
+                const cited = stations.filter((st) => allSourceIds(st).includes(x.id)).map((st) => st.id);
+                return (
+                  <li>
+                    <p class="f-src-cite">
+                      <span class="f-lbl">{x.label}</span> <span dir={ar ? 'rtl' : 'ltr'} lang={ar ? 'ar' : 'en'}>{x.citation}</span>
+                    </p>
+                    <p class="f-muted">
+                      {sourceKinds[x.kind]} · <a href={x.url} rel="noopener">{x.linkLabel}</a>
+                      {x.extra?.map((e) => (
+                        <>
+                          {' · '}
+                          <a href={e.url} rel="noopener">{e.label}</a>
+                        </>
+                      ))}
+                      {cited.length > 0 && ` · المحطات: ${cited.join('، ')}`}
+                    </p>
+                    <p><strong>ما يدعمه:</strong> {x.supports}</p>
+                    <p><strong>ما استُخدم منه:</strong> {x.used}</p>
+                  </li>
+                );
+              })}
+          </ol>
+        </div>
+      ))}
+    </section>
+  </article>
+</Base>
+
+<style>
+  .full {
+    padding-bottom: 5rem;
+  }
+  .f-head {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) 1rem;
+  }
+  .f-note {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    border-inline-start: 2px solid var(--copper-soft);
+    padding-inline-start: 1rem;
+  }
+  .f-part {
+    margin-top: 3.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--rule-strong);
+  }
+  .f-part > h2,
+  .f-stations h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .f-pn {
+    font-size: 0.55em;
+    color: var(--copper);
+  }
+  .f-part h3 {
+    margin-top: 2rem;
+    color: var(--prussian);
+  }
+  .f-muted {
+    color: var(--ink-soft);
+    font-size: 0.9em;
+  }
+  .f-latin,
+  .f-latin-t {
+    font-family: var(--font-latin);
+    unicode-bidi: isolate;
+  }
+  .f-latin {
+    /* العنصر LTR داخل سطر عربي: المسافة الفاصلة على يمينه فعلياً. */
+    margin-right: 0.5rem;
+    color: var(--copper);
+    font-size: 0.85em;
+    font-style: italic;
+  }
+  .f-idea {
+    font-size: 1.15rem;
+    line-height: 2;
+  }
+  .f-cq {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    line-height: 1.5;
+    margin: 1.5rem 0;
+  }
+  .f-subq li {
+    margin-block: 0.3rem;
+  }
+  .f-dl {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0.8rem 0 1.2rem;
+  }
+  .f-dl > div {
+    padding: 0.75rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-inline-start: 3px solid var(--prussian);
+  }
+  .f-dl dt {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+  .f-dl dd {
+    margin: 0.2rem 0 0;
+  }
+  .f-kinds {
+    list-style: none;
+    padding: 0;
+  }
+  .f-kinds li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    margin-block: 0.3rem;
+  }
+  .f-table {
+    overflow-x: auto;
+  }
+  .f-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.93rem;
+    min-width: 36rem;
+  }
+  .f-table th,
+  .f-table td {
+    text-align: start;
+    vertical-align: top;
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .f-table thead th {
+    font-family: var(--font-display);
+    color: var(--prussian);
+    border-bottom: 1.5px solid var(--rule-strong);
+  }
+  .f-table tbody th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* المحطات */
+  .f-era {
+    margin-top: 3rem;
+  }
+  .f-era-h {
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    color: var(--prussian-deep);
+    padding-bottom: 0.4rem;
+    border-bottom: 3px double var(--rule-strong);
+  }
+  .f-era-h span {
+    font-size: 0.5em;
+    color: var(--copper);
+    margin-inline-start: 0.6rem;
+  }
+  .f-era-intro {
+    color: var(--ink-soft);
+  }
+  .f-st {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+  .f-st-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1.4rem;
+    align-items: start;
+  }
+  .f-st-num {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 7vw, 4.5rem);
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1.2px var(--copper);
+  }
+  .f-st h4 {
+    font-size: clamp(1.4rem, 3.4vw, 2rem);
+    line-height: 1.45;
+    margin: 0.2rem 0 0.4rem;
+    color: var(--prussian-deep);
+  }
+  .f-st-period {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+  .f-dates {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+  }
+  .f-dates li {
+    display: flex;
+    gap: 0.4rem;
+    align-items: baseline;
+  }
+  .f-d-label {
+    font-family: var(--font-display);
+    color: var(--prussian);
+  }
+  .f-st-tracks {
+    margin: 0.4rem 0 0;
+  }
+  .f-fig {
+    margin: 1.5rem 0;
+  }
+  .f-fig :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+  }
+  .f-fig figcaption {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    border-inline-start: 2px solid var(--copper-soft);
+    padding-inline-start: 0.6rem;
+  }
+  .f-st-body {
+    max-width: 46rem;
+  }
+  .f-st-body h5 {
+    font-size: 1.3rem;
+    color: var(--prussian);
+    margin: 2rem 0 0.6rem;
+  }
+  .f-st-body h6 {
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    color: var(--prussian-deep);
+    margin: 1.2rem 0 0.4rem;
+  }
+  .f-q {
+    margin: 1.2rem 0 0;
+    padding: 1rem 1.2rem;
+    background: var(--prussian-deep);
+    color: var(--ivory);
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    line-height: 1.6;
+  }
+  .f-q span {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--copper-soft);
+  }
+  .f-changed {
+    border-inline-start: 3px solid var(--copper);
+    padding-inline-start: 0.9rem;
+  }
+  .f-deep {
+    padding-inline-start: 0.9rem;
+    border-inline-start: 1px solid var(--rule);
+  }
+  .f-cite {
+    font-size: 0.85rem;
+    color: var(--copper);
+  }
+  .f-chrono {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-inline-start: 2px solid var(--rule-strong);
+  }
+  .f-chrono li {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.4rem 0.9rem 0.6rem;
+  }
+  .f-c-when {
+    font-family: var(--font-display);
+    color: var(--prussian);
+  }
+  .f-concepts {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .f-concepts > div {
+    padding: 0.6rem 0.9rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .f-concepts dt {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+  .f-concepts dd {
+    margin: 0.15rem 0 0;
+  }
+  .f-people.has-portrait {
+    display: grid;
+    grid-template-columns: minmax(0, 18rem) 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .f-portrait {
+    margin: 0;
+  }
+  .f-example {
+    margin: 0.5rem 0;
+    padding: 1rem 1.2rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .f-ex-line {
+    font-size: 1.5rem;
+    margin: 0.3rem 0;
+    color: var(--prussian-deep);
+  }
+  .f-example figcaption {
+    color: var(--ink-soft);
+  }
+  .f-lab,
+  .f-reflect {
+    padding: 0.8rem 1rem;
+    background: var(--paper);
+    border-inline-start: 3px solid var(--amber);
+  }
+  .f-limits li,
+  .f-related li {
+    margin-block: 0.3rem;
+  }
+  .f-st-src {
+    list-style: none;
+    padding: 0;
+    font-size: 0.88rem;
+  }
+  .f-st-src li {
+    margin-block: 0.35rem;
+  }
+  .f-lbl {
+    font-family: var(--font-display);
+    color: var(--copper);
+    margin-inline-end: 0.3rem;
+  }
+
+  /* الضوابط */
+  .f-corr {
+    list-style: none;
+    padding: 0;
+  }
+  .f-corr li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .f-corr p {
+    margin: 0.2rem 0;
+  }
+  .f-tag-wrong,
+  .f-tag-better {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    margin-inline-end: 0.3rem;
+  }
+  .f-tag-wrong {
+    background: #f1e2d6;
+    color: var(--copper);
+  }
+  .f-tag-better {
+    background: var(--prussian-tint);
+    color: var(--prussian-deep);
+  }
+
+  /* المعجم */
+  .f-gloss {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: 0.2rem 2rem;
+    margin: 1rem 0 0;
+  }
+  .f-gloss > div {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    break-inside: avoid;
+  }
+  .f-gloss dt {
+    font-family: var(--font-display);
+    color: var(--prussian-deep);
+  }
+  .f-gloss dd {
+    margin: 0.15rem 0 0;
+    font-size: 0.95rem;
+  }
+
+  /* الكتب والمصادر */
+  .f-books,
+  .f-src {
+    padding-inline-start: 1.6rem;
+    max-width: 48rem;
+  }
+  .f-books li,
+  .f-src li {
+    padding-block: 0.8rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .f-books p,
+  .f-src p {
+    margin: 0.2rem 0;
+  }
+  .f-books li::marker,
+  .f-src li::marker {
+    color: var(--copper);
+    font-family: var(--font-display);
+  }
+  .f-src {
+    list-style: none;
+    padding-inline-start: 0;
+  }
+  .f-b-title {
+    font-size: 1.05rem;
+  }
+  .f-latin-t {
+    color: var(--prussian);
+  }
+  .f-free {
+    color: var(--prussian-deep);
+  }
+  .f-src-cite {
+    font-size: 0.95rem;
+  }
+  .f-src-cite span[dir='ltr'] {
+    font-family: var(--font-latin);
+  }
+
+  @media (max-width: 40rem) {
+    .f-table table {
+      min-width: 0;
+    }
+    .f-table thead {
+      display: none;
+    }
+    .f-table tr,
+    .f-table th,
+    .f-table td {
+      display: block;
+    }
+    .f-table tr {
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .f-table th,
+    .f-table td {
+      border: 0;
+      padding: 0.1rem 0;
+      white-space: normal;
+    }
+    .f-table td::before {
+      content: attr(data-label) ': ';
+      color: var(--copper);
+      font-family: var(--font-display);
+      font-size: 0.85em;
+    }
+    .f-people.has-portrait {
+      grid-template-columns: 1fr;
+    }
+    .f-portrait {
+      max-width: 16rem;
+    }
+    .f-st-head {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media print {
+    .f-part {
+      break-before: page;
+    }
+    .f-st {
+      break-before: page;
+    }
+    .f-q {
+      background: none;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+    }
+    a {
+      color: inherit;
+    }
+  }
+</style>
